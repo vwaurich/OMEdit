@@ -380,6 +380,7 @@ Component::Component(QString name, LibraryTreeItem *pLibraryTreeItem, QString tr
   setComponentFlags(true);
   createNonExistingComponent();
   createDefaultComponent();
+  createStateComponent();
   if (mpGraphicsView->getModelWidget()->getLibraryTreeItem()->getLibraryType() == LibraryTreeItem::MetaModel) {
     mpDefaultComponentRectangle->setVisible(true);
     mpDefaultComponentText->setVisible(true);
@@ -431,6 +432,7 @@ Component::Component(LibraryTreeItem *pLibraryTreeItem, Component *pParentCompon
   createNonExistingComponent();
   mpDefaultComponentRectangle = 0;
   mpDefaultComponentText = 0;
+  mpStateComponentRectangle = 0;
   drawInheritedComponentsAndShapes();
   setDialogAnnotation(QStringList());
   mpOriginItem = 0;
@@ -455,6 +457,7 @@ Component::Component(Component *pComponent, Component *pParentComponent, Compone
   createNonExistingComponent();
   mpDefaultComponentRectangle = 0;
   mpDefaultComponentText = 0;
+  mpStateComponentRectangle = 0;
   drawInheritedComponentsAndShapes();
   mTransformation = Transformation(mpReferenceComponent->mTransformation);
   setTransform(mTransformation.getTransformationMatrix());
@@ -496,6 +499,7 @@ Component::Component(Component *pComponent, GraphicsView *pGraphicsView)
   setComponentFlags(true);
   createNonExistingComponent();
   createDefaultComponent();
+  createStateComponent();
   drawComponent();
   mTransformation = Transformation(mpReferenceComponent->mTransformation);
   setTransform(mTransformation.getTransformationMatrix());
@@ -530,6 +534,7 @@ Component::Component(ComponentInfo *pComponentInfo, Component *pParentComponent)
   mDialogAnnotation.clear();
   createNonExistingComponent();
   createDefaultComponent();
+  mpStateComponentRectangle = 0;
   mpDefaultComponentRectangle->setVisible(true);
   mpDefaultComponentRectangle->setLineColor(QColor(0, 0, 0));
   mpDefaultComponentRectangle->setFillColor(QColor(110, 214, 0));
@@ -652,6 +657,13 @@ void Component::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
   Q_UNUSED(widget);
   if (mTransformation.isValid()) {
     setVisible(mTransformation.getVisible());
+    if (mpStateComponentRectangle) {
+      if (isVisible() && mpLibraryTreeItem && mpLibraryTreeItem->isState()) {
+        mpStateComponentRectangle->setVisible(true);
+      } else {
+        mpStateComponentRectangle->setVisible(false);
+      }
+    }
   }
 }
 
@@ -1114,6 +1126,24 @@ void Component::createDefaultComponent()
   mpDefaultComponentRectangle->setVisible(false);
   mpDefaultComponentText = new TextAnnotation(this);
   mpDefaultComponentText->setVisible(false);
+}
+
+/*!
+ * \brief Component::createStateComponent
+ * Creates a state component.
+ */
+void Component::createStateComponent()
+{
+  mpStateComponentRectangle = new RectangleAnnotation(this);
+  mpStateComponentRectangle->setVisible(false);
+  // create a state rectangle
+  mpStateComponentRectangle->setLineColor(QColor(95, 95, 95));
+  mpStateComponentRectangle->setLinePattern(StringHandler::LineDash);
+  mpStateComponentRectangle->setRadius(40);
+  mpStateComponentRectangle->setFillColor(QColor(255, 255, 255));
+  QList<QPointF> extents;
+  extents << QPointF(-120, -120) << QPointF(120, 120);
+  mpStateComponentRectangle->setExtents(extents);
 }
 
 /*!

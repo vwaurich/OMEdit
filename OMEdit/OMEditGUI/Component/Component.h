@@ -236,6 +236,7 @@ private:
   LineAnnotation *mpNonExistingComponentLine;
   RectangleAnnotation *mpDefaultComponentRectangle;
   TextAnnotation *mpDefaultComponentText;
+  RectangleAnnotation *mpStateComponentRectangle;
   QAction *mpParametersAction;
   QAction *mpAttributesAction;
   QAction *mpOpenClassAction;
@@ -260,6 +261,7 @@ private:
   QPointF mOldPosition;
   void createNonExistingComponent();
   void createDefaultComponent();
+  void createStateComponent();
   void drawInterfacePoints();
   void drawComponent();
   void drawInheritedComponentsAndShapes();

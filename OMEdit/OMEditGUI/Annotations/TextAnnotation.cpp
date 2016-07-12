@@ -385,7 +385,6 @@ QString TextAnnotation::getShapeAnnotation()
     annotationString.append(QString("fontSize=").append(QString::number(mFontSize)));
   }
   // get the font name
-  qDebug() << mFontName << Helper::systemFontInfo.family();
   if ((!mFontName.isEmpty()) && (mFontName.compare(Helper::systemFontInfo.family()) != 0)) {
     annotationString.append(QString("fontName=\"").append(mFontName).append("\""));
   }
