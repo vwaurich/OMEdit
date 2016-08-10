@@ -41,6 +41,12 @@ LineAnnotation::LineAnnotation(QString annotation, GraphicsView *pGraphicsView)
   setLineType(LineAnnotation::ShapeType);
   setStartComponent(0);
   setEndComponent(0);
+  setCondition("");
+  setImmediate(true);
+  setReset(true);
+  setSynchronize(false);
+  setPriority(1);
+  mpTextAnnotation = 0;
   setDelay("");
   setZf("");
   setZfr("");
@@ -61,6 +67,12 @@ LineAnnotation::LineAnnotation(ShapeAnnotation *pShapeAnnotation, Component *pPa
   setLineType(LineAnnotation::ComponentType);
   setStartComponent(0);
   setEndComponent(0);
+  setCondition("");
+  setImmediate(true);
+  setReset(true);
+  setSynchronize(false);
+  setPriority(1);
+  mpTextAnnotation = 0;
   setDelay("");
   setZf("");
   setZfr("");
@@ -104,6 +116,12 @@ LineAnnotation::LineAnnotation(Component *pStartComponent, GraphicsView *pGraphi
   // set the start component
   setStartComponent(pStartComponent);
   setEndComponent(0);
+  setCondition("");
+  setImmediate(true);
+  setReset(true);
+  setSynchronize(false);
+  setPriority(1);
+  mpTextAnnotation = 0;
   setDelay("1e-4");
   setZf("10000");
   setZfr("100");
@@ -123,6 +141,12 @@ LineAnnotation::LineAnnotation(QString annotation, Component *pStartComponent, C
   setStartComponent(pStartComponent);
   // set the end component
   setEndComponent(pEndComponent);
+  setCondition("");
+  setImmediate(true);
+  setReset(true);
+  setSynchronize(false);
+  setPriority(1);
+  mpTextAnnotation = 0;
   setDelay("");
   setZf("");
   setZfr("");
@@ -140,12 +164,57 @@ LineAnnotation::LineAnnotation(QString annotation, Component *pStartComponent, C
   mpGraphicsView->addItem(this);
 }
 
+LineAnnotation::LineAnnotation(QString annotation, QString text, Component *pStartComponent, Component *pEndComponent, QString condition,
+                               QString immediate, QString reset, QString synchronize, QString priority, GraphicsView *pGraphicsView)
+  : ShapeAnnotation(false, pGraphicsView, 0)
+{
+  setFlag(QGraphicsItem::ItemIsSelectable);
+  mLineType = LineAnnotation::TransitionType;
+  setZValue(1000);
+  // set the default values
+  GraphicItem::setDefaults();
+  ShapeAnnotation::setDefaults();
+  // set the start component
+  setStartComponent(pStartComponent);
+  // set the end component
+  setEndComponent(pEndComponent);
+  setCondition(condition);
+  setImmediate(immediate.contains("true"));
+  setReset(reset.contains("true"));
+  setSynchronize(synchronize.contains("true"));
+  setPriority(priority.toInt());
+  setDelay("");
+  setZf("");
+  setZfr("");
+  setAlpha("");
+  parseShapeAnnotation(annotation);
+  /* make the points relative to origin */
+  QList<QPointF> points;
+  for (int i = 0 ; i < mPoints.size() ; i++) {
+    QPointF point = mOrigin + mPoints[i];
+    points.append(point);
+  }
+  mPoints = points;
+  mOrigin = QPointF(0, 0);
+  if (!text.isEmpty()) {
+    mpTextAnnotation = new TextAnnotation(text, this);
+  }
+  // set the graphics view
+  mpGraphicsView->addItem(this);
+}
+
 LineAnnotation::LineAnnotation(Component *pParent)
   : ShapeAnnotation(pParent)
 {
   setLineType(LineAnnotation::ComponentType);
   setStartComponent(0);
   setEndComponent(0);
+  setCondition("");
+  setImmediate(true);
+  setReset(true);
+  setSynchronize(false);
+  setPriority(1);
+  mpTextAnnotation = 0;
   setDelay("");
   setZf("");
   setZfr("");
@@ -174,6 +243,12 @@ LineAnnotation::LineAnnotation(GraphicsView *pGraphicsView)
   setLineType(LineAnnotation::ShapeType);
   setStartComponent(0);
   setEndComponent(0);
+  setCondition("");
+  setImmediate(true);
+  setReset(true);
+  setSynchronize(false);
+  setPriority(1);
+  mpTextAnnotation = 0;
   setDelay("");
   setZf("");
   setZfr("");
@@ -300,43 +375,110 @@ void LineAnnotation::drawLineAnnotaion(QPainter *painter)
   applyLinePattern(painter);
   // draw start arrow
   if (mPoints.size() > 1) {
-    if (mArrow.at(0) == StringHandler::ArrowFilled) {
+    /* If line is a transition then we need to draw starting fork if needed.
+     * From Modelica Spec 33revision1,
+     * For synchronize=true, an inverse "fork" symbol is used in the beginning of the arrow [ See the rightmost transition above. ].
+     */
+    if (mLineType == LineAnnotation::TransitionType) {
+      if (mSynchronize) {
+        if (mGeometries.size() > 0) {
+          painter->save();
+          qreal size = 2.0;
+          QPolygonF polygon1 = perpendicularLine(mPoints.at(0), mPoints.at(1), 4.0);
+          QPointF point1, point2;
+          if (mGeometries.at(0) == ShapeAnnotation::HorizontalLine) {
+            point1 = mPoints.at(0) + QPointF(0, size);
+            point2 = mPoints.at(0) + QPointF(0, -size);
+          } else if (mGeometries.at(0) == ShapeAnnotation::VerticalLine) {
+            point1 = mPoints.at(0) + QPointF(size, 0);
+            point2 = mPoints.at(0) + QPointF(-size, 0);
+          }
+          QPolygonF polygon;
+          // find which point is closest to 2nd point of polygon so that we can draw a rectangle like polygon to represent fork.
+          qreal pseudoDistance1 = qPow(polygon1.at(1).x() - point1.x(), 2) + qPow(polygon1.at(1).y() - point1.y(), 2);
+          qreal pseudoDistance2 = qPow(polygon1.at(1).x() - point2.x(), 2) + qPow(polygon1.at(1).y() - point2.y(), 2);
+          if (pseudoDistance1 < pseudoDistance2) {
+            polygon << polygon1 << point1 << point2 << polygon1.at(0);
+          } else {
+            polygon << polygon1 << point2 << point1 << polygon1.at(0);
+          }
+          painter->drawPolygon(polygon);
+          painter->restore();
+        }
+      }
+      /* From Modelica Spec 33revision1,
+       * In addition to the line defined by the points of the Line annotation, a perpendicular line is used to represent the transition.
+       * This line is closer to the first point if immediate=false otherwise closer to the last point.
+       */
       painter->save();
-      painter->setBrush(QBrush(mLineColor, Qt::SolidPattern));
-      painter->drawPolygon(drawArrow(mPoints.at(0), mPoints.at(1), mArrowSize, mArrow.at(0)));
+      QPolygonF polygon;
+      if (mImmediate) {
+        polygon = perpendicularLine(mPoints.at(mPoints.size() - 1), mPoints.at(mPoints.size() - 2), 5.0);
+      } else {
+        polygon = perpendicularLine(mPoints.at(0), mPoints.at(1), 5.0);
+      }
+      QPen pen = painter->pen();
+      pen.setWidth(2);
+      painter->setPen(pen);
+      painter->drawLine(polygon.at(0), polygon.at(1));
       painter->restore();
+
+    }
+    if (mArrow.at(0) == StringHandler::ArrowFilled) {
+      drawArrow(painter, mPoints.at(0), mPoints.at(1), mArrowSize, mArrow.at(0));
     } else {
-      painter->drawPolygon(drawArrow(mPoints.at(0), mPoints.at(1), mArrowSize, mArrow.at(0)));
+      drawArrow(painter, mPoints.at(0), mPoints.at(1), mArrowSize, mArrow.at(0));
     }
   }
   painter->drawPath(getShape());
   // draw end arrow
   if (mPoints.size() > 1) {
-    if (mArrow.at(1) == StringHandler::ArrowFilled) {
-      painter->save();
-      painter->setBrush(QBrush(mLineColor, Qt::SolidPattern));
-      painter->drawPolygon(drawArrow(mPoints.at(mPoints.size() - 1), mPoints.at(mPoints.size() - 2), mArrowSize, mArrow.at(1)));
-      painter->restore();
+    /* If line is a transition then we need to draw ending arrow in any case.
+     * From Modelica Spec 33revision1,
+     * If reset=true, a filled arrow head is used otherwise an open arrow head.
+     */
+    if (mLineType == LineAnnotation::TransitionType) {
+      if (mReset) {
+        drawArrow(painter, mPoints.at(mPoints.size() - 1), mPoints.at(mPoints.size() - 2), mArrowSize, StringHandler::ArrowFilled);
+      } else {
+        drawArrow(painter, mPoints.at(mPoints.size() - 1), mPoints.at(mPoints.size() - 2), mArrowSize, StringHandler::ArrowOpen);
+      }
     } else {
-      painter->drawPolygon(drawArrow(mPoints.at(mPoints.size() - 1), mPoints.at(mPoints.size() - 2), mArrowSize, mArrow.at(1)));
+      if (mArrow.at(1) == StringHandler::ArrowFilled) {
+        drawArrow(painter, mPoints.at(mPoints.size() - 1), mPoints.at(mPoints.size() - 2), mArrowSize, mArrow.at(1));
+      } else {
+        drawArrow(painter, mPoints.at(mPoints.size() - 1), mPoints.at(mPoints.size() - 2), mArrowSize, mArrow.at(1));
+      }
     }
   }
 }
 
-QPolygonF LineAnnotation::drawArrow(QPointF startPos, QPointF endPos, qreal size, int arrowType) const
+/*!
+ * \brief LineAnnotation::drawArrow
+ * Draws the arrow according to the arrow type.
+ * \param painter
+ * \param startPos
+ * \param endPos
+ * \param size
+ * \param arrowType
+ */
+void LineAnnotation::drawArrow(QPainter *painter, QPointF startPos, QPointF endPos, qreal size, int arrowType) const
 {
+  painter->save();
   double xA = size / 2;
   double yA = size * sqrt(3) / 2;
   double xB = -xA;
   double yB = yA;
   switch (arrowType) {
     case StringHandler::ArrowFilled:
+      painter->setBrush(QBrush(mLineColor, Qt::SolidPattern));
       break;
     case StringHandler::ArrowHalf:
       xB = 0;
       break;
     case StringHandler::ArrowNone:
-      return QPolygonF();
+      painter->restore();
+      return;
     case StringHandler::ArrowOpen:
       break;
   }
@@ -373,6 +515,55 @@ QPolygonF LineAnnotation::drawArrow(QPointF startPos, QPointF endPos, qreal size
   t3 = t1 * t2;
   polygon << QPointF(t3.m11(), t3.m21());
   polygon << startPos;
+  painter->drawPolygon(polygon);
+  painter->restore();
+}
+
+/*!
+ * \brief LineAnnotation::perpendicularLine
+ * Returns a polygon which represents a prependicular line.
+ * \param painter
+ * \param startPos
+ * \param endPos
+ * \param size
+ */
+QPolygonF LineAnnotation::perpendicularLine(QPointF startPos, QPointF endPos, qreal size) const
+{
+  double xA = size / 2;
+  double yA = size * sqrt(3) / 2;
+  double xB = -xA;
+  double yB = yA;
+  double angle = 0.0f;
+  if (endPos.x() - startPos.x() == 0) {
+    if (endPos.y() - startPos.y() >= 0) {
+      angle = 0;
+    } else {
+      angle = M_PI;
+    }
+  } else {
+    angle = -(M_PI / 2 - (atan((endPos.y() - startPos.y())/(endPos.x() - startPos.x()))));
+    if(startPos.x() > endPos.x()) {
+      angle += M_PI;
+    }
+  }
+  qreal m11, m12, m13, m21, m22, m23, m31, m32, m33;
+  m11 = cos(angle);
+  m22 = m11;
+  m21 = sin(angle);
+  m12 = -m21;
+  m13 = startPos.x();
+  m23 = startPos.y();
+  m31 = 0;
+  m32 = 0;
+  m33 = 1;
+  QTransform t1(m11, m12, m13, m21, m22, m23, m31, m32, m33);
+  QTransform t2(xA, 1, 1, yA, 1, 1, 1, 1, 1);
+  QTransform t3 = t1 * t2;
+  QPolygonF polygon;
+  polygon << QPointF(t3.m11(), t3.m21());
+  t2.setMatrix(xB, 1, 1, yB, 1, 1, 1, 1, 1);
+  t3 = t1 * t2;
+  polygon << QPointF(t3.m11(), t3.m21());
   return polygon;
 }
 
@@ -697,6 +888,12 @@ void LineAnnotation::updateShape(ShapeAnnotation *pShapeAnnotation)
   setStartComponentName(pLineAnnotation->getStartComponentName());
   setEndComponent(pLineAnnotation->getEndComponent());
   setEndComponentName(pLineAnnotation->getEndComponentName());
+  setCondition(pLineAnnotation->getCondition());
+  setImmediate(pLineAnnotation->getImmediate());
+  setReset(pLineAnnotation->getReset());
+  setSynchronize(pLineAnnotation->getSynchronize());
+  setPriority(pLineAnnotation->getPriority());
+  mpTextAnnotation = pLineAnnotation->getTextAnnotation();
   setDelay(pLineAnnotation->getDelay());
   setZf(pLineAnnotation->getZf());
   setZfr(pLineAnnotation->getZfr());

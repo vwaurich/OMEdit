@@ -39,15 +39,17 @@
 #include "Component.h"
 
 class Component;
+class TextAnnotation;
 
 class LineAnnotation : public ShapeAnnotation
 {
   Q_OBJECT
 public:
   enum LineType {
-    ComponentType,  /* Line is within Component. */
-    ConnectionType,  /* Line is a connection. */
-    ShapeType  /* Line is a custom shape. */
+    ComponentType,    /* Line is within Component. */
+    ConnectionType,   /* Line is a connection. */
+    TransitionType,   /* Line is transition. */
+    ShapeType         /* Line is a custom shape. */
   };
   // Used for icon/diagram shape
   LineAnnotation(QString annotation, GraphicsView *pGraphicsView);
@@ -59,6 +61,9 @@ public:
   LineAnnotation(Component *pStartComponent, GraphicsView *pGraphicsView);
   // Used for reading a connection
   LineAnnotation(QString annotation, Component *pStartComponent, Component *pEndComponent, GraphicsView *pGraphicsView);
+  // Used for reading a transition
+  LineAnnotation(QString annotation, QString text, Component *pStartComponent, Component *pEndComponent, QString condition, QString immediate,
+                 QString reset, QString synchronize, QString priority, GraphicsView *pGraphicsView);
   // Used for non-exisiting component
   LineAnnotation(Component *pParent);
   // Used for non-existing class
@@ -69,7 +74,8 @@ public:
   QPainterPath shape() const;
   void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
   void drawLineAnnotaion(QPainter *painter);
-  QPolygonF drawArrow(QPointF startPos, QPointF endPos, qreal size, int arrowType) const;
+  void drawArrow(QPainter *painter, QPointF startPos, QPointF endPos, qreal size, int arrowType) const;
+  QPolygonF perpendicularLine(QPointF startPos, QPointF endPos, qreal size) const;
   QString getOMCShapeAnnotation();
   QString getShapeAnnotation();
   QString getMetaModelShapeAnnotation();
@@ -89,6 +95,17 @@ public:
   Component* getEndComponent() {return mpEndComponent;}
   void setEndComponentName(QString name) {mEndComponentName = name;}
   QString getEndComponentName() {return mEndComponentName;}
+  void setCondition(QString condition) {mCondition = condition;}
+  QString getCondition() {return mCondition;}
+  void setImmediate(bool immediate) {mImmediate = immediate;}
+  bool getImmediate() {return mImmediate;}
+  void setReset(bool reset) {mReset = reset;}
+  bool getReset() {return mReset;}
+  void setSynchronize(bool synchronize) {mSynchronize = synchronize;}
+  bool getSynchronize() {return mSynchronize;}
+  void setPriority(int priority) {mPriority = priority;}
+  int getPriority() {return mPriority;}
+  TextAnnotation* getTextAnnotation() {return mpTextAnnotation;}
   void setDelay(QString delay) {mDelay = delay;}
   QString getDelay() {return mDelay;}
   void setZf(QString zf) {mZf = zf;}
@@ -106,6 +123,12 @@ private:
   QString mStartComponentName;
   Component *mpEndComponent;
   QString mEndComponentName;
+  QString mCondition;
+  bool mImmediate;
+  bool mReset;
+  bool mSynchronize;
+  int mPriority;
+  TextAnnotation *mpTextAnnotation;
   // MetaModel attributes
   QString mDelay;
   QString mZf;

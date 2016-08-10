@@ -139,6 +139,7 @@ public:
   int getConnectionCount(QString className);
   QString getNthConnection(QString className, int num);
   QString getNthConnectionAnnotation(QString className, int num);
+  QList<QList<QString> > getTransitions(QString className);
   int getInheritanceCount(QString className);
   QString getNthInheritedClass(QString className, int num);
   QList<QString> getInheritedClasses(QString className);

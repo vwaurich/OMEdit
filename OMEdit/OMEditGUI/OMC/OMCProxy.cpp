@@ -1146,6 +1146,19 @@ QString OMCProxy::getNthConnectionAnnotation(QString className, int num)
 }
 
 /*!
+ * \brief OMCProxy::getTransitions
+ * Returns the list of transitions in a class.
+ * \param className
+ * \return
+ */
+QList<QList<QString> > OMCProxy::getTransitions(QString className)
+{
+  QList<QList<QString> > transitions = mpOMCInterface->getTransitions(className);
+  printMessagesStringInternal();
+  return transitions;
+}
+
+/*!
  * \brief OMCProxy::getInheritanceCount
  * Returns the inheritance count of a model.
  * \param className - is the name of the model.

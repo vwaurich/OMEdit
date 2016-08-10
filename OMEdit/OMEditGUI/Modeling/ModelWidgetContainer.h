@@ -410,6 +410,7 @@ private:
   void drawModelInheritedClassConnections(ModelWidget *pModelWidget);
   void removeInheritedClassConnections();
   void getModelConnections();
+  void getModelTransitions();
   void getMetaModelSubModels();
   void getMetaModelConnections();
 private slots:

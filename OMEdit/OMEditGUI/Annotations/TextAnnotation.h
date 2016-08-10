@@ -52,6 +52,8 @@ public:
   TextAnnotation(ShapeAnnotation *pShapeAnnotation, GraphicsView *pGraphicsView);
   // Used for default component
   TextAnnotation(Component *pParent);
+  // Used for transition text
+  TextAnnotation(QString annotation, LineAnnotation *pLineAnnotation);
   void parseShapeAnnotation(QString annotation);
   QRectF boundingRect() const;
   QPainterPath shape() const;

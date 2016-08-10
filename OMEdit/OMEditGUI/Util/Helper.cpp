@@ -638,8 +638,10 @@ QString GUIMessages::getMessage(int type)
       return tr("TLM co-simulation session is already running. Only one session is allowed.");
     case TERMINAL_COMMAND_NOT_SET:
       return tr("Terminal command is not set. You can define a new terminal command in <b>%1->General->Terminal Command</b>.");
-    case UNABLE_FIND_COMPONENT:
+    case UNABLE_FIND_COMPONENT_IN_CONNECTION:
       return tr("Unable to find component %1 while parsing connection %2.");
+    case UNABLE_FIND_COMPONENT_IN_TRANSITION:
+      return tr("Unable to find component %1 while parsing transition(%2).");
     case SELECT_SIMULATION_OPTION:
       return tr("Select at least one of the following options, <br /><br />* %1<br />* %2<br />* %3")
           .arg(Helper::saveExperimentAnnotation)

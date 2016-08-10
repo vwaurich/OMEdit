@@ -2574,6 +2574,7 @@ void ModelWidget::loadConnections()
   if (!mConnectionsLoaded) {
     drawModelInheritedClassConnections(this);
     getModelConnections();
+    getModelTransitions();
     mConnectionsLoaded = true;
   }
 }
@@ -2887,6 +2888,7 @@ void ModelWidget::reDrawModelWidget()
       // Draw Diagram connections and inherited connections
       drawModelInheritedClassConnections(this);
       getModelConnections();
+      getModelTransitions();
       mDiagramViewLoaded = true;
       mConnectionsLoaded = true;
     }
@@ -3565,7 +3567,7 @@ void ModelWidget::getModelConnections()
     // show error message if start component is not found.
     if (!pStartConnectorComponent) {
       pMainWindow->getMessagesWidget()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0,
-                                                                  GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT)
+                                                                  GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT_IN_CONNECTION)
                                                                   .arg(connectionList.at(0)).arg(connectionString),
                                                                   Helper::scriptingKind, Helper::errorLevel));
       continue;
@@ -3599,7 +3601,7 @@ void ModelWidget::getModelConnections()
     // show error message if end component is not found.
     if (!pEndConnectorComponent) {
       pMainWindow->getMessagesWidget()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0,
-                                                                  GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT)
+                                                                  GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT_IN_CONNECTION)
                                                                   .arg(connectionList.at(1)).arg(connectionString),
                                                                   Helper::scriptingKind, Helper::errorLevel));
       continue;
@@ -3620,6 +3622,58 @@ void ModelWidget::getModelConnections()
     pConnectionLineAnnotation = new LineAnnotation(lineShape, pStartConnectorComponent, pEndConnectorComponent, mpDiagramGraphicsView);
     pConnectionLineAnnotation->setStartComponentName(connectionList.at(0));
     pConnectionLineAnnotation->setEndComponentName(connectionList.at(1));
+    mpUndoStack->push(new AddConnectionCommand(pConnectionLineAnnotation, false));
+  }
+}
+
+/*!
+ * \brief ModelWidget::getModelTransitions
+ * Gets the transitions of the model and place them in the diagram GraphicsView.
+ */
+void ModelWidget::getModelTransitions()
+{
+  MainWindow *pMainWindow = mpModelWidgetContainer->getMainWindow();
+  QList<QList<QString>> transitions = pMainWindow->getOMCProxy()->getTransitions(mpLibraryTreeItem->getNameStructure());
+  for (int i = 0 ; i < transitions.size() ; i++) {
+    QList<QString> transition = transitions.at(i);
+    // get start component
+    Component *pStartComponent = mpDiagramGraphicsView->getComponentObject(transition.at(0));
+    // show error message if start component is not found.
+    if (!pStartComponent) {
+      pMainWindow->getMessagesWidget()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0,
+                                                                  GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT_IN_TRANSITION)
+                                                                  .arg(transition.at(0)).arg(transition.join(",")),
+                                                                  Helper::scriptingKind, Helper::errorLevel));
+      continue;
+    }
+    // get end component
+    Component *pEndComponent = mpDiagramGraphicsView->getComponentObject(transition.at(1));
+    // show error message if end component is not found.
+    if (!pEndComponent) {
+      pMainWindow->getMessagesWidget()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0,
+                                                                  GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT_IN_TRANSITION)
+                                                                  .arg(transition.at(1)).arg(transition.join(",")),
+                                                                  Helper::scriptingKind, Helper::errorLevel));
+      continue;
+    }
+    // get the transition annotations
+    QStringList shapesList = StringHandler::getStrings(transition.at(7), '(', ')');
+    // Now parse the shapes available in list
+    QString lineShape, textShape = "";
+    foreach (QString shape, shapesList) {
+      if (shape.startsWith("Line")) {
+        lineShape = shape.mid(QString("Line").length());
+        lineShape = StringHandler::removeFirstLastBrackets(lineShape);
+      } else if (shape.startsWith("Text")) {
+        textShape = shape.mid(QString("Text").length());
+        textShape = StringHandler::removeFirstLastBrackets(textShape);
+      }
+    }
+    LineAnnotation *pConnectionLineAnnotation;
+    pConnectionLineAnnotation = new LineAnnotation(lineShape, textShape, pStartComponent, pEndComponent, transition.at(2), transition.at(3),
+                                                   transition.at(4), transition.at(5), transition.at(6), mpDiagramGraphicsView);
+    pConnectionLineAnnotation->setStartComponentName(transition.at(0));
+    pConnectionLineAnnotation->setEndComponentName(transition.at(1));
     mpUndoStack->push(new AddConnectionCommand(pConnectionLineAnnotation, false));
   }
 }
@@ -3700,7 +3754,7 @@ void ModelWidget::getMetaModelConnections()
     Component *pStartSubModelComponent = mpDiagramGraphicsView->getComponentObject(startConnectionList.at(0));
     if (!pStartSubModelComponent) {
       pMessagesWidget->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0,
-                                                 GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT).arg(startConnectionList.at(0))
+                                                 GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT_IN_CONNECTION).arg(startConnectionList.at(0))
                                                  .arg(connection.attribute("From")), Helper::scriptingKind, Helper::errorLevel));
       continue;
     }
@@ -3708,7 +3762,7 @@ void ModelWidget::getMetaModelConnections()
     Component *pStartInterfacePointComponent = getConnectorComponent(pStartSubModelComponent, startConnectionList.at(1));
     if (!pStartInterfacePointComponent) {
       pMessagesWidget->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0,
-                                                 GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT).arg(startConnectionList.at(1))
+                                                 GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT_IN_CONNECTION).arg(startConnectionList.at(1))
                                                  .arg(connection.attribute("From")), Helper::scriptingKind, Helper::errorLevel));
       continue;
     }
@@ -3720,7 +3774,7 @@ void ModelWidget::getMetaModelConnections()
     Component *pEndSubModelComponent = mpDiagramGraphicsView->getComponentObject(endConnectionList.at(0));
     if (!pEndSubModelComponent) {
       pMessagesWidget->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0,
-                                                 GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT).arg(endConnectionList.at(0))
+                                                 GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT_IN_CONNECTION).arg(endConnectionList.at(0))
                                                  .arg(connection.attribute("To")), Helper::scriptingKind, Helper::errorLevel));
       continue;
     }
@@ -3728,7 +3782,7 @@ void ModelWidget::getMetaModelConnections()
     Component *pEndInterfacePointComponent = getConnectorComponent(pEndSubModelComponent, endConnectionList.at(1));
     if (!pEndInterfacePointComponent) {
       pMessagesWidget->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0,
-                                                 GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT).arg(endConnectionList.at(1))
+                                                 GUIMessages::getMessage(GUIMessages::UNABLE_FIND_COMPONENT_IN_CONNECTION).arg(endConnectionList.at(1))
                                                  .arg(connection.attribute("To")), Helper::scriptingKind, Helper::errorLevel));
       continue;
     }
