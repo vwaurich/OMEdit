@@ -57,8 +57,8 @@ public:
   LineAnnotation(ShapeAnnotation *pShapeAnnotation, Component *pParent);
   // Used for icon/diagram inherited shape
   LineAnnotation(ShapeAnnotation *pShapeAnnotation, GraphicsView *pGraphicsView);
-  // Used for creating connection
-  LineAnnotation(Component *pStartComponent, GraphicsView *pGraphicsView);
+  // Used for creating connection/transition
+  LineAnnotation(LineAnnotation::LineType lineType, Component *pStartComponent, GraphicsView *pGraphicsView);
   // Used for reading a connection
   LineAnnotation(QString annotation, Component *pStartComponent, Component *pEndComponent, GraphicsView *pGraphicsView);
   // Used for reading a transition
@@ -261,6 +261,31 @@ public slots:
   void startConnectorChanged(const QModelIndex &current, const QModelIndex &previous);
   void endConnectorChanged(const QModelIndex &current, const QModelIndex &previous);
   void createConnection();
+};
+
+class CreateTransitionDialog : public QDialog
+{
+  Q_OBJECT
+public:
+  CreateTransitionDialog(GraphicsView *pGraphicsView, LineAnnotation *pTransitionLineAnnotation, QWidget *pParent = 0);
+private:
+  GraphicsView *mpGraphicsView;
+  LineAnnotation *mpTransitionLineAnnotation;
+  Label *mpHeading;
+  QFrame *mpHorizontalLine;
+  QGroupBox *mpPropertiesGroupBox;
+  Label *mpConditionLabel;
+  QLineEdit *mpConditionTextBox;
+  QCheckBox *mpImmediateCheckBox;
+  QCheckBox *mpResetCheckBox;
+  QCheckBox *mpSynchronizeCheckBox;
+  Label *mpPriorityLabel;
+  QSpinBox *mpPrioritySpinBox;
+  QPushButton *mpOkButton;
+  QPushButton *mpCancelButton;
+  QDialogButtonBox *mpButtonBox;
+public slots:
+  void createTransition();
 };
 
 #endif // LINEANNOTATION_H

@@ -260,6 +260,7 @@ public:
   static QString right;
   static QString createConnection;
   static QString connectionAttributes;
+  static QString createTransition;
   static QString findVariables;
   static QString openClass;
   static QString openClassTip;
@@ -321,6 +322,10 @@ public:
   static QString OMCFlagsTip;
   static QString saveExperimentAnnotation;
   static QString saveOpenModelicaSimulationFlagsAnnotation;
+  static QString condition;
+  static QString immediate;
+  static QString synchronize;
+  static QString priority;
 };
 
 class GUIMessages : public QObject

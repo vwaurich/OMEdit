@@ -165,6 +165,7 @@ public:
   QAction* getImportFromOMNotebookAction() {return mpImportFromOMNotebookAction;}
   QAction* getImportNgspiceNetlistAction() {return mpImportNgspiceNetlistAction;}
   QAction* getConnectModeAction() {return mpConnectModeAction;}
+  QAction* getTransitionModeAction() {return mpTransitionModeAction;}
   QAction* getReSimulateModelAction() {return mpReSimulateModelAction;}
   QAction* getReSimulateSetupAction() {return mpReSimulateSetupAction;}
   QAction* getSimulationParamsAction() {return mpSimulationParamsAction;}
@@ -330,6 +331,7 @@ private:
   QAction *mpTextShapeAction;
   QAction *mpBitmapShapeAction;
   QAction *mpConnectModeAction;
+  QAction *mpTransitionModeAction;
   // Model Switcher Toolbar Actions
   QAction *mpModelSwitcherActions[MaxRecentFiles];
   // Plot Toolbar Actions

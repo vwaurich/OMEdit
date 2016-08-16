@@ -951,6 +951,74 @@ void DeleteConnectionCommand::undo()
   mpConnectionLineAnnotation->getGraphicsView()->addConnectionToClass(mpConnectionLineAnnotation);
 }
 
+AddTransitionCommand::AddTransitionCommand(LineAnnotation *pTransitionLineAnnotation, bool addTransition, QUndoCommand *pParent)
+  : QUndoCommand(pParent)
+{
+  mpTransitionLineAnnotation = pTransitionLineAnnotation;
+  mAddTransition = addTransition;
+  setText(QString("Add Transition transition(%1, %2)").arg(mpTransitionLineAnnotation->getStartComponentName(),
+                                                           mpTransitionLineAnnotation->getEndComponentName()));
+
+  mpTransitionLineAnnotation->setToolTip(QString("<b>connect</b>(%1, %2)").arg(mpTransitionLineAnnotation->getStartComponentName())
+                                         .arg(mpTransitionLineAnnotation->getEndComponentName()));
+  mpTransitionLineAnnotation->drawCornerItems();
+  mpTransitionLineAnnotation->setCornerItemsActiveOrPassive();
+}
+
+/*!
+ * \brief AddTransitionCommand::redo
+ * Redo the AddTransitionCommand.
+ */
+void AddTransitionCommand::redo()
+{
+  // Add the start component connection details.
+  Component *pStartComponent = mpTransitionLineAnnotation->getStartComponent();
+  if (pStartComponent->getRootParentComponent()) {
+    pStartComponent->getRootParentComponent()->addConnectionDetails(mpTransitionLineAnnotation);
+  } else {
+    pStartComponent->addConnectionDetails(mpTransitionLineAnnotation);
+  }
+  // Add the end component connection details.
+  Component *pEndComponent = mpTransitionLineAnnotation->getEndComponent();
+  if (pEndComponent->getRootParentComponent()) {
+    pEndComponent->getRootParentComponent()->addConnectionDetails(mpTransitionLineAnnotation);
+  } else {
+    pEndComponent->addConnectionDetails(mpTransitionLineAnnotation);
+  }
+  mpTransitionLineAnnotation->getGraphicsView()->addConnectionToList(mpTransitionLineAnnotation);
+  mpTransitionLineAnnotation->getGraphicsView()->addItem(mpTransitionLineAnnotation);
+  mpTransitionLineAnnotation->emitAdded();
+  if (mAddTransition) {
+    mpTransitionLineAnnotation->getGraphicsView()->addConnectionToClass(mpTransitionLineAnnotation);
+  }
+}
+
+/*!
+ * \brief AddTransitionCommand::undo
+ * Undo the AddTransitionCommand.
+ */
+void AddTransitionCommand::undo()
+{
+  // Remove the start component connection details.
+  Component *pStartComponent = mpTransitionLineAnnotation->getStartComponent();
+  if (pStartComponent->getRootParentComponent()) {
+    pStartComponent->getRootParentComponent()->removeConnectionDetails(mpTransitionLineAnnotation);
+  } else {
+    pStartComponent->removeConnectionDetails(mpTransitionLineAnnotation);
+  }
+  // Remove the end component connection details.
+  Component *pEndComponent = mpTransitionLineAnnotation->getEndComponent();
+  if (pEndComponent->getRootParentComponent()) {
+    pEndComponent->getRootParentComponent()->removeConnectionDetails(mpTransitionLineAnnotation);
+  } else {
+    pEndComponent->removeConnectionDetails(mpTransitionLineAnnotation);
+  }
+  mpTransitionLineAnnotation->getGraphicsView()->deleteConnectionFromList(mpTransitionLineAnnotation);
+  mpTransitionLineAnnotation->getGraphicsView()->removeItem(mpTransitionLineAnnotation);
+  mpTransitionLineAnnotation->emitDeleted();
+  mpTransitionLineAnnotation->getGraphicsView()->deleteConnectionFromClass(mpTransitionLineAnnotation);
+}
+
 UpdateCoOrdinateSystemCommand::UpdateCoOrdinateSystemCommand(GraphicsView *pGraphicsView, CoOrdinateSystem oldCoOrdinateSystem,
                                                              CoOrdinateSystem newCoOrdinateSystem, bool copyProperties, QString oldVersion,
                                                              QString newVersion, QString oldUsesAnnotationString,

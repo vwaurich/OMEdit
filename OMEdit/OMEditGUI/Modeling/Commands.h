@@ -194,6 +194,17 @@ private:
   GraphicsView *mpGraphicsView;
 };
 
+class AddTransitionCommand : public QUndoCommand
+{
+public:
+  AddTransitionCommand(LineAnnotation *pTransitionLineAnnotation, bool addTransition, QUndoCommand *pParent = 0);
+  void redo();
+  void undo();
+private:
+  LineAnnotation *mpTransitionLineAnnotation;
+  bool mAddTransition;
+};
+
 class UpdateCoOrdinateSystemCommand : public QUndoCommand
 {
 public:

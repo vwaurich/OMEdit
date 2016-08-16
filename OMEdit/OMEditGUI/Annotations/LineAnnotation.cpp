@@ -97,19 +97,29 @@ LineAnnotation::LineAnnotation(ShapeAnnotation *pShapeAnnotation, GraphicsView *
   connect(pShapeAnnotation, SIGNAL(deleted()), this, SLOT(referenceShapeDeleted()));
 }
 
-LineAnnotation::LineAnnotation(Component *pStartComponent, GraphicsView *pGraphicsView)
+LineAnnotation::LineAnnotation(LineAnnotation::LineType lineType, Component *pStartComponent, GraphicsView *pGraphicsView)
   : ShapeAnnotation(false, pGraphicsView, 0)
 {
   setFlag(QGraphicsItem::ItemIsSelectable);
-  mLineType = LineAnnotation::ConnectionType;
+  mLineType = lineType;
   setZValue(1000);
   // set the default values
   GraphicItem::setDefaults();
   ShapeAnnotation::setDefaults();
-  // use the linecolor of start component for the connection line.
-  if (pStartComponent->getShapesList().size() > 0) {
-    ShapeAnnotation *pShapeAnnotation = pStartComponent->getShapesList().at(0);
-    mLineColor = pShapeAnnotation->getLineColor();
+  if (mLineType == LineAnnotation::ConnectionType) {
+    // use the linecolor of start component for the connection line.
+    if (pStartComponent->getShapesList().size() > 0) {
+      ShapeAnnotation *pShapeAnnotation = pStartComponent->getShapesList().at(0);
+      mLineColor = pShapeAnnotation->getLineColor();
+    }
+    mpTextAnnotation = 0;
+  } else if (mLineType == LineAnnotation::TransitionType) {
+    /* From Modelica Spec 33revision1,
+     * The recommended color is {175,175,175} for transition lines.
+     */
+    mLineColor = QColor(175, 175, 175);
+    mSmooth = StringHandler::SmoothBezier;
+    mpTextAnnotation = 0;
   }
   // set the graphics view
   mpGraphicsView->addItem(this);
@@ -121,7 +131,6 @@ LineAnnotation::LineAnnotation(Component *pStartComponent, GraphicsView *pGraphi
   setReset(true);
   setSynchronize(false);
   setPriority(1);
-  mpTextAnnotation = 0;
   setDelay("1e-4");
   setZf("10000");
   setZfr("100");
@@ -801,7 +810,7 @@ void LineAnnotation::updateEndPoint(QPointF point)
 {
   prepareGeometryChange();
   if (mLineType == LineAnnotation::ConnectionType) {
-    if (!mpGraphicsView->isCreatingConnection()) {
+    if (!mpGraphicsView->isCreatingConnection() && !mpGraphicsView->isCreatingTransition()) {
       manhattanizeShape();
       removeRedundantPointsGeometriesAndCornerItems();
     }
@@ -836,7 +845,7 @@ void LineAnnotation::updateEndPoint(QPointF point)
       }
       updateCornerItem(secondLastIndex);
     }
-    if (!mpGraphicsView->isCreatingConnection()) {
+    if (!mpGraphicsView->isCreatingConnection() && !mpGraphicsView->isCreatingTransition()) {
       removeRedundantPointsGeometriesAndCornerItems();
     }
   } else {
@@ -1553,7 +1562,7 @@ CreateConnectionDialog::CreateConnectionDialog(GraphicsView *pGraphicsView, Line
 }
 
 /*!
- * \brief ConnectionArray::createSpinBox
+ * \brief CreateConnectionDialog::createSpinBox
  * Creates a QSpinBox with arrayIndex limit.
  * \param arrayIndex
  * \return
@@ -1701,7 +1710,7 @@ void CreateConnectionDialog::endConnectorChanged(const QModelIndex &current, con
 }
 
 /*!
- * \brief ConnectionArray::createArrayConnection
+ * \brief CreateConnectionDialog::createConnection
  * Slot activated when mpOkButton clicked SIGNAL is raised. Creates an array connection.
  */
 void CreateConnectionDialog::createConnection()
@@ -1752,5 +1761,83 @@ void CreateConnectionDialog::createConnection()
   mpGraphicsView->getModelWidget()->getUndoStack()->push(new AddConnectionCommand(mpConnectionLineAnnotation, true));
   mpGraphicsView->getModelWidget()->getLibraryTreeItem()->emitConnectionAdded(mpConnectionLineAnnotation);
   mpGraphicsView->getModelWidget()->updateModelText();
+  accept();
+}
+
+/*!
+ * \class CreateTransitionDialog
+ * \brief A dialog interface for making transitions.
+ */
+/*!
+ * \brief CreateTransitionDialog::CreateTransitionDialog
+ * \param pGraphicsView
+ * \param pTransitionLineAnnotation
+ * \param pParent
+ */
+CreateTransitionDialog::CreateTransitionDialog(GraphicsView *pGraphicsView, LineAnnotation *pTransitionLineAnnotation, QWidget *pParent)
+  : QDialog(pParent), mpGraphicsView(pGraphicsView), mpTransitionLineAnnotation(pTransitionLineAnnotation)
+{
+  setWindowTitle(QString(Helper::applicationName).append(" - ").append(Helper::createTransition));
+  setAttribute(Qt::WA_DeleteOnClose);
+  // heading
+  mpHeading = Utilities::getHeadingLabel(Helper::createTransition);
+  // horizontal line
+  mpHorizontalLine = Utilities::getHeadingLine();
+  // properties groupbox
+  mpPropertiesGroupBox = new QGroupBox(Helper::properties);
+  // condition
+  mpConditionLabel = new Label(Helper::condition);
+  mpConditionTextBox = new QLineEdit;
+  // immediate
+  mpImmediateCheckBox = new QCheckBox(Helper::immediate);
+  mpImmediateCheckBox->setChecked(true);
+  // reset
+  mpResetCheckBox = new QCheckBox(Helper::reset);
+  mpResetCheckBox->setChecked(true);
+  // synchronize
+  mpSynchronizeCheckBox = new QCheckBox(Helper::synchronize);
+  // priority
+  mpPriorityLabel = new Label(Helper::priority);
+  mpPrioritySpinBox = new QSpinBox;
+  // Create the buttons
+  mpOkButton = new QPushButton(Helper::ok);
+  mpOkButton->setAutoDefault(true);
+  connect(mpOkButton, SIGNAL(clicked()), SLOT(createTransition()));
+  mpCancelButton = new QPushButton(Helper::cancel);
+  mpCancelButton->setAutoDefault(false);
+  connect(mpCancelButton, SIGNAL(clicked()), SLOT(reject()));
+  // add buttons
+  mpButtonBox = new QDialogButtonBox(Qt::Horizontal);
+  mpButtonBox->addButton(mpOkButton, QDialogButtonBox::ActionRole);
+  mpButtonBox->addButton(mpCancelButton, QDialogButtonBox::ActionRole);
+  // properties groupbox layout
+  QGridLayout *pPropertiesGridLayout = new QGridLayout;
+  pPropertiesGridLayout->addWidget(mpConditionLabel, 0, 0);
+  pPropertiesGridLayout->addWidget(mpConditionTextBox, 0, 1);
+  pPropertiesGridLayout->addWidget(mpImmediateCheckBox, 1, 1);
+  pPropertiesGridLayout->addWidget(mpResetCheckBox, 2, 1);
+  pPropertiesGridLayout->addWidget(mpSynchronizeCheckBox, 3, 1);
+  pPropertiesGridLayout->addWidget(mpPriorityLabel, 4, 0);
+  pPropertiesGridLayout->addWidget(mpPrioritySpinBox, 4, 1);
+  mpPropertiesGroupBox->setLayout(pPropertiesGridLayout);
+  // main layout
+  QGridLayout *pMainGridLayout = new QGridLayout;
+  pMainGridLayout->setAlignment(Qt::AlignTop);
+  pMainGridLayout->addWidget(mpHeading, 0, 0);
+  pMainGridLayout->addWidget(mpHorizontalLine, 1, 0);
+  pMainGridLayout->addWidget(mpPropertiesGroupBox, 2, 0);
+  pMainGridLayout->addWidget(mpButtonBox, 3, 0, Qt::AlignRight);
+  setLayout(pMainGridLayout);
+}
+
+/*!
+ * \brief CreateTransitionDialog::createTransition
+ * Slot activated when mpOkButton clicked SIGNAL is raised. Creates a transition.
+ */
+void CreateTransitionDialog::createTransition()
+{
+//  mpGraphicsView->getModelWidget()->getUndoStack()->push(new AddConnectionCommand(mpTransitionLineAnnotation, true));
+//  mpGraphicsView->getModelWidget()->getLibraryTreeItem()->emitConnectionAdded(mpTransitionLineAnnotation);
+//  mpGraphicsView->getModelWidget()->updateModelText();
   accept();
 }

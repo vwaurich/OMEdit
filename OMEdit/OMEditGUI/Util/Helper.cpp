@@ -254,6 +254,7 @@ QString Helper::center;
 QString Helper::right;
 QString Helper::createConnection;
 QString Helper::connectionAttributes;
+QString Helper::createTransition;
 QString Helper::findVariables;
 QString Helper::openClass;
 QString Helper::openClassTip;
@@ -315,6 +316,10 @@ QString Helper::OMCFlags;
 QString Helper::OMCFlagsTip;
 QString Helper::saveExperimentAnnotation;
 QString Helper::saveOpenModelicaSimulationFlagsAnnotation;
+QString Helper::condition;
+QString Helper::immediate;
+QString Helper::synchronize;
+QString Helper::priority;
 
 void Helper::initHelperVariables()
 {
@@ -465,6 +470,7 @@ void Helper::initHelperVariables()
   Helper::right = tr("Right");
   Helper::createConnection = tr("Create Connection");
   Helper::connectionAttributes = tr("Connection Attributes");
+  Helper::createTransition = tr("Create Transition");
   Helper::findVariables = tr("Find Variables");
   Helper::openClass = tr("Open Class");
   Helper::openClassTip = tr("Opens the class details");
@@ -526,6 +532,10 @@ void Helper::initHelperVariables()
   Helper::OMCFlagsTip = tr("Space separated list of flags e.g., +d=initialization +cheapmatchingAlgorithm=3");
   Helper::saveExperimentAnnotation = tr("Save experiment annotation inside model");
   Helper::saveOpenModelicaSimulationFlagsAnnotation = tr("Save __OpenModelica_simulationFlags annotation inside model");
+  Helper::condition = tr("Condition:");
+  Helper::immediate = tr("Immediate");
+  Helper::synchronize = tr("Synchronize");
+  Helper::priority = tr("Priority:");
 }
 
 QString GUIMessages::getMessage(int type)

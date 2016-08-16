@@ -83,6 +83,7 @@ private:
   bool mIsCustomScale;
   bool mAddClassAnnotationNeeded;
   bool mIsCreatingConnection;
+  bool mIsCreatingTransition;
   bool mIsCreatingLineShape;
   bool mIsCreatingPolygonShape;
   bool mIsCreatingRectangleShape;
@@ -90,6 +91,7 @@ private:
   bool mIsCreatingTextShape;
   bool mIsCreatingBitmapShape;
   Component *mpClickedComponent;
+  Component *mpClickedState;
   bool mIsMovingComponentsAndShapes;
   bool mRenderingLibraryPixmap;
   QList<Component*> mComponentsList;
@@ -99,6 +101,7 @@ private:
   QList<LineAnnotation*> mInheritedConnectionsList;
   QList<ShapeAnnotation*> mInheritedShapesList;
   LineAnnotation *mpConnectionLineAnnotation;
+  LineAnnotation *mpTransitionLineAnnotation;
   LineAnnotation *mpLineShapeAnnotation;
   PolygonAnnotation *mpPolygonShapeAnnotation;
   RectangleAnnotation *mpRectangleShapeAnnotation;
@@ -133,6 +136,8 @@ public:
   bool isAddClassAnnotationNeeded() {return mAddClassAnnotationNeeded;}
   void setIsCreatingConnection(bool enable);
   bool isCreatingConnection() {return mIsCreatingConnection;}
+  void setIsCreatingTransition(bool enable);
+  bool isCreatingTransition() {return mIsCreatingTransition;}
   void setIsCreatingLineShape(bool enable);
   bool isCreatingLineShape() {return mIsCreatingLineShape;}
   void setIsCreatingPolygonShape(bool enable);
@@ -246,8 +251,10 @@ signals:
   void keyPressDuplicate();
 public slots:
   void addConnection(Component *pComponent);
+  void addTransition(Component *pComponent);
   void removeCurrentConnection();
   void deleteConnection(LineAnnotation *pConnectionLineAnnotation);
+  void removeCurrentTransition();
   void resetZoom();
   void zoomIn();
   void zoomOut();

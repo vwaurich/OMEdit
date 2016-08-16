@@ -93,6 +93,7 @@ GraphicsView::GraphicsView(StringHandler::ViewType viewType, ModelWidget *parent
   setIsCustomScale(false);
   setAddClassAnnotationNeeded(false);
   setIsCreatingConnection(false);
+  setIsCreatingTransition(false);
   mIsCreatingLineShape = false;
   mIsCreatingPolygonShape = false;
   mIsCreatingRectangleShape = false;
@@ -100,8 +101,17 @@ GraphicsView::GraphicsView(StringHandler::ViewType viewType, ModelWidget *parent
   mIsCreatingTextShape = false;
   mIsCreatingBitmapShape = false;
   mpClickedComponent = 0;
+  mpClickedState = 0;
   setIsMovingComponentsAndShapes(false);
   setRenderingLibraryPixmap(false);
+  mpConnectionLineAnnotation = 0;
+  mpTransitionLineAnnotation = 0;
+  mpLineShapeAnnotation = 0;
+  mpPolygonShapeAnnotation = 0;
+  mpRectangleShapeAnnotation = 0;
+  mpEllipseShapeAnnotation = 0;
+  mpTextShapeAnnotation = 0;
+  mpBitmapShapeAnnotation = 0;
   createActions();
 }
 
@@ -115,6 +125,17 @@ void GraphicsView::setExtentRectangle(qreal left, qreal bottom, qreal right, qre
 void GraphicsView::setIsCreatingConnection(bool enable)
 {
   mIsCreatingConnection = enable;
+  if (enable) {
+    setDragMode(QGraphicsView::NoDrag);
+  } else {
+    setDragMode(QGraphicsView::RubberBandDrag);
+  }
+  setItemsFlags(!enable);
+}
+
+void GraphicsView::setIsCreatingTransition(bool enable)
+{
+  mIsCreatingTransition = enable;
   if (enable) {
     setDragMode(QGraphicsView::NoDrag);
   } else {
@@ -1095,7 +1116,7 @@ void GraphicsView::addConnection(Component *pComponent)
   // When clicking the start component
   if (!isCreatingConnection()) {
     QPointF startPos = snapPointToGrid(pComponent->mapToScene(pComponent->boundingRect().center()));
-    mpConnectionLineAnnotation = new LineAnnotation(pComponent, this);
+    mpConnectionLineAnnotation = new LineAnnotation(LineAnnotation::ConnectionType, pComponent, this);
     setIsCreatingConnection(true);
     mpConnectionLineAnnotation->addPoint(startPos);
     mpConnectionLineAnnotation->addPoint(startPos);
@@ -1166,6 +1187,82 @@ void GraphicsView::addConnection(Component *pComponent)
   }
 }
 
+void GraphicsView::addTransition(Component *pComponent)
+{
+  // When clicking the start state
+  if (!isCreatingTransition()) {
+    QPointF startPos = snapPointToGrid(pComponent->mapToScene(pComponent->boundingRect().center()));
+    mpTransitionLineAnnotation = new LineAnnotation(LineAnnotation::TransitionType, pComponent, this);
+    setIsCreatingTransition(true);
+    mpTransitionLineAnnotation->addPoint(startPos);
+    mpTransitionLineAnnotation->addPoint(startPos);
+    mpTransitionLineAnnotation->addPoint(startPos);
+  } else if (isCreatingTransition()) { // When clicking the end state
+    mpTransitionLineAnnotation->setEndComponent(pComponent);
+    // update the last point to the center of state
+    QPointF newPos = snapPointToGrid(pComponent->mapToScene(pComponent->boundingRect().center()));
+    mpTransitionLineAnnotation->updateEndPoint(newPos);
+    mpTransitionLineAnnotation->update();
+    // check if connection is valid
+    Component *pStartComponent = mpTransitionLineAnnotation->getStartComponent();
+    MainWindow *pMainWindow = mpModelWidget->getModelWidgetContainer()->getMainWindow();
+    if (pStartComponent == pComponent) {
+      QMessageBox::information(pMainWindow, QString(Helper::applicationName).append(" - ").append(Helper::information),
+                               GUIMessages::getMessage(GUIMessages::SAME_COMPONENT_CONNECT), Helper::ok);
+      removeCurrentConnection();
+    } else {
+      // check of any of starting or ending components are array
+      //      bool showConnectionArrayDialog = false;
+      //      if ((pStartComponent->getParentComponent() && pStartComponent->getRootParentComponent()->getComponentInfo()->isArray()) ||
+      //          (!pStartComponent->getParentComponent() && pStartComponent->getRootParentComponent()->getLibraryTreeItem() && pStartComponent->getRootParentComponent()->getLibraryTreeItem()->getRestriction() == StringHandler::ExpandableConnector) ||
+      //          (pStartComponent->getParentComponent() && pStartComponent->getLibraryTreeItem() && pStartComponent->getLibraryTreeItem()->getRestriction() == StringHandler::ExpandableConnector) ||
+      //          (pStartComponent->getComponentInfo() && pStartComponent->getComponentInfo()->isArray()) ||
+      //          (pComponent->getParentComponent() && pComponent->getRootParentComponent()->getComponentInfo()->isArray()) ||
+      //          (!pComponent->getParentComponent() && pComponent->getRootParentComponent()->getLibraryTreeItem() && pComponent->getRootParentComponent()->getLibraryTreeItem()->getRestriction() == StringHandler::ExpandableConnector) ||
+      //          (pComponent->getParentComponent() && pComponent->getLibraryTreeItem() && pComponent->getLibraryTreeItem()->getRestriction() == StringHandler::ExpandableConnector) ||
+      //          (pComponent->getComponentInfo() && pComponent->getComponentInfo()->isArray())) {
+      //        showConnectionArrayDialog = true;
+      //      }
+      //      if (showConnectionArrayDialog) {
+      //        CreateConnectionDialog *pConnectionArray = new CreateConnectionDialog(this, mpConnectionLineAnnotation,
+      //                                                                              mpModelWidget->getModelWidgetContainer()->getMainWindow());
+      //        // if user cancels the array connection
+      //        if (!pConnectionArray->exec()) {
+      //          removeCurrentConnection();
+      //        }
+      //      } else {
+      QString startComponentName, endComponentName;
+      if (pStartComponent->getParentComponent()) {
+        startComponentName = QString(pStartComponent->getRootParentComponent()->getName()).append(".").append(pStartComponent->getName());
+      } else {
+        startComponentName = pStartComponent->getName();
+      }
+      if (pComponent->getParentComponent()) {
+        endComponentName = QString(pComponent->getRootParentComponent()->getName()).append(".").append(pComponent->getName());
+      } else {
+        endComponentName = pComponent->getName();
+      }
+      mpTransitionLineAnnotation->setStartComponentName(startComponentName);
+      mpTransitionLineAnnotation->setEndComponentName(endComponentName);
+      CreateTransitionDialog *pCreateTransitionDialog = new CreateTransitionDialog(this, mpTransitionLineAnnotation,
+                                                                                   mpModelWidget->getModelWidgetContainer()->getMainWindow());
+      if (!pCreateTransitionDialog->exec()) {
+        removeCurrentTransition();
+      }
+      //        if (mpModelWidget->getLibraryTreeItem()->getLibraryType() == LibraryTreeItem::MetaModel) {
+      //          MetaModelConnectionAttributes *pMetaModelConnectionAttributes;
+      //          pMetaModelConnectionAttributes = new MetaModelConnectionAttributes(this, mpConnectionLineAnnotation,
+      //                                                                             mpModelWidget->getModelWidgetContainer()->getMainWindow(), false);
+      //          // if user cancels the metamodel connection
+      //          if (!pMetaModelConnectionAttributes->exec()) {
+      //            removeCurrentConnection();
+      //          }
+      //        } else {
+    }
+    setIsCreatingTransition(false);
+  }
+}
+
 /*!
  * \brief GraphicsView::removeCurrentConnection
  * Removes the current connecting connector from the model.
@@ -1188,6 +1285,19 @@ void GraphicsView::deleteConnection(LineAnnotation *pConnectionLineAnnotation)
 {
   pConnectionLineAnnotation->setSelected(false);
   mpModelWidget->getUndoStack()->push(new DeleteConnectionCommand(pConnectionLineAnnotation));
+}
+
+/*!
+ * \brief GraphicsView::removeCurrentTransition
+ * Removes the current connecting transition from the model.
+ */
+void GraphicsView::removeCurrentTransition()
+{
+  if (isCreatingTransition()) {
+    setIsCreatingTransition(false);
+    delete mpTransitionLineAnnotation;
+    mpTransitionLineAnnotation = 0;
+  }
 }
 
 //! Resets zoom factor to 100%.
@@ -1568,6 +1678,9 @@ void GraphicsView::mousePressEvent(QMouseEvent *event)
   if (isCreatingConnection()) {
     mpConnectionLineAnnotation->addPoint(snappedPoint);
     eventConsumed = true;
+  } else if (isCreatingTransition()) {
+    mpTransitionLineAnnotation->addPoint(snappedPoint);
+    eventConsumed = true;
   } else if (pMainWindow->getLineShapeAction()->isChecked()) {
     /* if line shape tool button is checked then create a line */
     createLineShape(snappedPoint);
@@ -1622,6 +1735,15 @@ void GraphicsView::mousePressEvent(QMouseEvent *event)
               addConnection(pComponent);  // end the connection
               eventConsumed = true; // consume the event so that connection line or end component will not become selected
             }
+          } else if (pMainWindow->getTransitionModeAction()->isChecked() && mViewType == StringHandler::Diagram &&
+                     !mpModelWidget->getLibraryTreeItem()->isSystemLibrary() && pComponent->getLibraryTreeItem() &&
+                     pComponent->getLibraryTreeItem()->isState()) {
+            if (!isCreatingTransition()) {
+              mpClickedState = pComponent;
+            } else if (isCreatingTransition()) {
+              addTransition(pComponent);  // end the transition
+              eventConsumed = true; // consume the event so that transition line or end component will not become selected
+            }
           }
         }
       }
@@ -1653,11 +1775,14 @@ void GraphicsView::mouseMoveEvent(QMouseEvent *event)
       if (pComponent) {
         Component *pRootComponent = pComponent->getRootParentComponent();
         if (pRootComponent && !pRootComponent->isSelected()) {
-          if (pMainWindow->getConnectModeAction()->isChecked() && mViewType == StringHandler::Diagram &&
-              !mpModelWidget->getLibraryTreeItem()->isSystemLibrary() &&
-              ((pComponent->getLibraryTreeItem() && pComponent->getLibraryTreeItem()->isConnector()) ||
-               (mpModelWidget->getLibraryTreeItem()->getLibraryType() == LibraryTreeItem::MetaModel &&
-                pComponent->getComponentType() == Component::Port))) {
+          if ((pMainWindow->getConnectModeAction()->isChecked() && mViewType == StringHandler::Diagram &&
+               !mpModelWidget->getLibraryTreeItem()->isSystemLibrary() &&
+               ((pComponent->getLibraryTreeItem() && pComponent->getLibraryTreeItem()->isConnector()) ||
+                (mpModelWidget->getLibraryTreeItem()->getLibraryType() == LibraryTreeItem::MetaModel &&
+                 pComponent->getComponentType() == Component::Port))) ||
+              (pMainWindow->getTransitionModeAction()->isChecked() && mViewType == StringHandler::Diagram &&
+               !mpModelWidget->getLibraryTreeItem()->isSystemLibrary() && pComponent->getLibraryTreeItem() &&
+               pComponent->getLibraryTreeItem()->isState())) {
             setCrossCursor = true;
             /* If setOverrideCursor() has been called twice, calling restoreOverrideCursor() will activate the first cursor set.
            * Calling this function a second time restores the original widgets' cursors.
@@ -1679,6 +1804,9 @@ void GraphicsView::mouseMoveEvent(QMouseEvent *event)
   if (isCreatingConnection()) {
     mpConnectionLineAnnotation->updateEndPoint(snappedPoint);
     mpConnectionLineAnnotation->update();
+  } else if (isCreatingTransition()) {
+    mpTransitionLineAnnotation->updateEndPoint(snappedPoint);
+    mpTransitionLineAnnotation->update();
   } else if (isCreatingLineShape()) {
     mpLineShapeAnnotation->updateEndPoint(snappedPoint);
     mpLineShapeAnnotation->update();
@@ -1702,6 +1830,11 @@ void GraphicsView::mouseMoveEvent(QMouseEvent *event)
     if (mpClickedComponent) { // if we creating a connection then don't select the starting component.
       mpClickedComponent->setSelected(false);
     }
+  } else if (mpClickedState) {
+    addTransition(mpClickedState);  // start the transition
+    if (mpClickedState) { // if we creating a transition then don't select the starting state.
+      mpClickedState->setSelected(false);
+    }
   }
   QGraphicsView::mouseMoveEvent(event);
 }
@@ -1712,6 +1845,7 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event)
     return;
   }
   mpClickedComponent = 0;
+  mpClickedState = 0;
   if (isMovingComponentsAndShapes()) {
     setIsMovingComponentsAndShapes(false);
     bool hasComponentMoved = false;
@@ -4394,6 +4528,7 @@ void ModelWidgetContainer::currentModelWidgetChanged(QMdiSubWindow *pSubWindow)
   getMainWindow()->getTextShapeAction()->setEnabled(enabled && modelica && !pModelWidget->getTextViewToolButton()->isChecked());
   getMainWindow()->getBitmapShapeAction()->setEnabled(enabled && modelica && !pModelWidget->getTextViewToolButton()->isChecked());
   getMainWindow()->getConnectModeAction()->setEnabled(enabled && (modelica || metaModel) && !pModelWidget->getTextViewToolButton()->isChecked());
+  getMainWindow()->getTransitionModeAction()->setEnabled(enabled && (modelica) && !pModelWidget->getTextViewToolButton()->isChecked());
   getMainWindow()->getSimulateModelAction()->setEnabled(enabled && modelica && pLibraryTreeItem->isSimulationAllowed());
   getMainWindow()->getSimulateWithTransformationalDebuggerAction()->setEnabled(enabled && modelica && pLibraryTreeItem->isSimulationAllowed());
   getMainWindow()->getSimulateWithAlgorithmicDebuggerAction()->setEnabled(enabled && modelica && pLibraryTreeItem->isSimulationAllowed());
