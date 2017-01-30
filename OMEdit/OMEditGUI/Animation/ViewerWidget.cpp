@@ -194,11 +194,56 @@ void ViewerWidget::mousePressEvent(QMouseEvent *event)
       break;
     case Qt::RightButton:
       button = 3;
+      //qt counts pixels from upper left corner and osg from bottom left corner
+      pickShape(event->x(), this->height()-event->y());
       break;
     default:
       break;
   }
   getEventQueue()->mouseButtonPress(static_cast<float>(event->x()), static_cast<float>(event->y()), button);
+}
+
+/*!
+ * \brief ViewerWidget::pickShape
+ * Picks the name of the selected shape in the osg view
+ * \param x - mouse position pixel in x direction in osg system
+ * \param y - mouse position pixel in y direction in osg system
+ */
+void ViewerWidget::pickShape(int x, int y)
+{
+  //std::cout<<"pickShape "<<x<<" and "<<y<<std::endl;
+  osgUtil::LineSegmentIntersector::Intersections intersections;
+  if (mpSceneView->computeIntersections(mpSceneView->getCamera(),osgUtil::Intersector::WINDOW , x, y, intersections))
+    {
+    osgUtil::LineSegmentIntersector::Intersections::iterator hitr = intersections.begin();
+    /*
+    //iterate over all intersections
+    for(osgUtil::LineSegmentIntersector::Intersections::iterator hitr = intersections.begin();
+      hitr != intersections.end();
+      ++hitr)
+    */
+    {
+      if (!hitr->nodePath.empty() && !(hitr->nodePath.back()->getName().empty()))
+      {
+      // the geodes are identified by name.
+      std::cout<<"Object \""<<hitr->nodePath.back()->getName()<<"\""<<std::endl;
+      }
+      else if (hitr->drawable.valid())
+      {
+      std::cout<<"Object \""<<hitr->drawable->className()<<"\""<<std::endl;
+      }
+      /*
+      osg::Vec3d vec = hitr->getLocalIntersectPoint();
+      std::cout<<"        local coords vertex("<< hitr->getLocalIntersectPoint()<<")"<<"  normal("<<hitr->getLocalIntersectNormal()<<")"<<std::endl;
+      std::cout<<"        world coords vertex("<< hitr->getWorldIntersectPoint()<<")"<<"  normal("<<hitr->getWorldIntersectNormal()<<")"<<std::endl;
+      const osgUtil::LineSegmentIntersector::Intersection::IndexList& vil = hitr->indexList;
+      for(unsigned int i=0;i<vil.size();++i)
+      {
+        std::cout<<"        vertex indices ["<<i<<"] = "<<vil[i]<<std::endl;
+      }
+       */
+    }
+  }
 }
 
 /*!

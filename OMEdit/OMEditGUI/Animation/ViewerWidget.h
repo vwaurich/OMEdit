@@ -38,6 +38,8 @@
 #include <osgViewer/GraphicsWindow>
 #include <osgViewer/CompositeViewer>
 
+#include<iostream>
+
 /*!
  * \note We need to create two files with same class name since Qt meta object compiler doesn't handle ifdef.
  * OpenGLWidget.h uses QOpenGLWidget and GLWidget.h uses QGLWidget
@@ -77,6 +79,7 @@ protected:
   virtual void mouseReleaseEvent(QMouseEvent *event);
   virtual void wheelEvent(QWheelEvent *event);
   virtual bool event(QEvent* event);
+  void pickShape(int x, int y);
 private:
   osgGA::EventQueue* getEventQueue() const;
 

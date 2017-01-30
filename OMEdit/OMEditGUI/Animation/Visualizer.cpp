@@ -445,7 +445,7 @@ void UpdateVisitor::apply(osg::Geode& node)
 {
   //std::cout<<"GEODE "<< _shape._id<<" "<<std::endl;
   osg::ref_ptr<osg::StateSet> ss = node.getOrCreateStateSet();
-
+  node.setName(_shape._id);
   //its a drawable and not a cad file so we have to create a new drawable
   if (_shape._type.compare("dxf") != 0 and (_shape._type.compare("stl") != 0))
   {
