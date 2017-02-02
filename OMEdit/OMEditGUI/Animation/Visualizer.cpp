@@ -510,7 +510,12 @@ void UpdateVisitor::apply(osg::Geode& node)
   //dxf files are treated separately since they are constructed natively, including color
   if (_shape._type.compare("dxf") != 0)
   {
-    osg::Material *material = dynamic_cast<osg::Material*>(ss->getAttribute(osg::StateAttribute::MATERIAL));
+    osg::Material *material;
+    if (NULL == node.getStateSet()->getAttribute(osg::StateAttribute::MATERIAL))
+      material = new osg::Material();
+    else
+      material = dynamic_cast<osg::Material*>(ss->getAttribute(osg::StateAttribute::MATERIAL));
+
     material->setDiffuse(osg::Material::FRONT, osg::Vec4f(_shape._color[0].exp / 255, _shape._color[1].exp / 255, _shape._color[2].exp / 255, 1.0));
     ss->setAttribute(material);
     node.setStateSet(ss);
