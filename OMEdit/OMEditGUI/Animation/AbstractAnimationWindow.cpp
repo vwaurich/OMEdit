@@ -151,15 +151,17 @@ void AbstractAnimationWindow::changeShapeTransparency()
  */
 void AbstractAnimationWindow::removeTransparencyForAllShapes()
 {
+  if (mpVisualizer != NULL)
+  {
     std::vector<ShapeObject>* shapes = nullptr;
     shapes = &mpVisualizer->getBaseData()->_shapes;
     for(std::vector<ShapeObject>::iterator shape = shapes->begin() ; shape < shapes->end(); ++shape )
     {
-
-      shape->setTransparency(false);
+    shape->setTransparency(false);
     }
     mpVisualizer->updateVisAttributes(mpVisualizer->getTimeManager()->getVisTime());
     updateScene();
+  }
 }
 
 /*!
