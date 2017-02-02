@@ -68,6 +68,8 @@ class ShapeObject
   ShapeObject& operator=(const ShapeObject&) = default;
   void dumpVisAttributes() const;
   //void fetchVisAttributes(rapidxml::xml_node<>* node, ModelicaMatReader matReader,/* fmi1_import_t* fmu,*/ double time, bool useFMU);
+  void setTransparency(bool transp);
+  bool getTransparency();
  public:
   std::string _id;
   std::string _type;
@@ -84,6 +86,8 @@ class ShapeObject
   ShapeObjectAttribute _specCoeff;
   osg::Matrix _mat;
   ShapeObjectAttribute _extra;
+private:
+  bool mTransparent;
 };
 
 struct rAndT

@@ -55,7 +55,6 @@
  */
 AbstractAnimationWindow::AbstractAnimationWindow(QWidget *pParent)
   : QMainWindow(pParent),
-//    osgViewer::CompositeViewer(),
     mPathName(""),
     mFileName(""),
     mpVisualizer(nullptr),
@@ -80,6 +79,9 @@ AbstractAnimationWindow::AbstractAnimationWindow(QWidget *pParent)
   mpViewerWidget = new ViewerWidget(this);
   // we need to set the minimum height so that visualization window is still shown when we cascade windows.
   mpViewerWidget->setMinimumHeight(100);
+  // Ensures that the signal customContextMenuRequested() to open the conext menu is emitted.
+  mpViewerWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(mpViewerWidget, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showShapePickContextMenu(const QPoint&)));
   // toolbar icon size
   int toolbarIconSize = OptionsDialog::instance()->getGeneralSettingsPage()->getToolbarIconSizeSpinBox()->value();
   mpAnimationToolBar->setIconSize(QSize(toolbarIconSize, toolbarIconSize));
@@ -93,6 +95,71 @@ AbstractAnimationWindow::AbstractAnimationWindow(QWidget *pParent)
   pCentralWidgetFrame->setFrameStyle(QFrame::StyledPanel);
   pCentralWidgetFrame->setLayout(pGridLayout);
   setCentralWidget(pCentralWidgetFrame);
+}
+
+/*!
+ * \brief AbstractAnimationWindow::showShapePickContextMenu
+ * \param pos
+ */
+void AbstractAnimationWindow::showShapePickContextMenu(const QPoint& pos)
+{
+  QString name = QString::fromStdString(mpViewerWidget->getSelectedShape());
+  //std::cout<<"SHOW CONTEXT "<<name.toStdString()<<" compare "<<QString::compare(name,QString(""))<< std::endl;
+  //the context widget
+  QMenu contextMenu(tr("Context menu"), this);
+  QMenu shapeMenu(name, this);
+  QAction action1("Change Transparency", this);
+  QAction action2("Reset All Shapes", this);
+  //if a shape is picked, we can set it transparent
+  if (0 != QString::compare(name,QString("")))
+  {
+    contextMenu.addMenu(&shapeMenu);
+    shapeMenu.addAction(&action1);
+    connect(&action1, SIGNAL(triggered()), this, SLOT(changeShapeTransparency()));
+  }
+  contextMenu.addAction(&action2);
+  connect(&action2, SIGNAL(triggered()), this, SLOT(removeTransparencyForAllShapes()));
+  connect(&contextMenu, SIGNAL(aboutToHide()), this, SLOT(doSomething()));
+  contextMenu.exec(QWidget::mapToGlobal(pos));
+}
+
+/*!
+ * \brief AbstractAnimationWindow::changeShapeTransparency
+ * changes the transparency selection of a shape
+ */
+void AbstractAnimationWindow::changeShapeTransparency()
+{
+    ShapeObject* shape = nullptr;
+    if (mpVisualizer->getBaseData()->getShapeObjectByID(mpViewerWidget->getSelectedShape(),&shape))
+    {
+      if (shape->_type.compare("dxf") == 0)
+        std::cout<<"Transparency feature for DXF-Files is not applicable."<<std::endl;
+      else
+      {
+        shape->setTransparency(not shape->getTransparency());
+        mpVisualizer->updateVisAttributes(mpVisualizer->getTimeManager()->getVisTime());
+        updateScene();
+        mpViewerWidget->setSelectedShape("");
+      }
+    }
+}
+
+/*!
+ * \brief AbstractAnimationWindow::removeTransparancyForAllShapes
+ * sets all transparency settings back to default (nothing is transparent)
+ *
+ */
+void AbstractAnimationWindow::removeTransparencyForAllShapes()
+{
+    std::vector<ShapeObject>* shapes = nullptr;
+    shapes = &mpVisualizer->getBaseData()->_shapes;
+    for(std::vector<ShapeObject>::iterator shape = shapes->begin() ; shape < shapes->end(); ++shape )
+    {
+
+      shape->setTransparency(false);
+    }
+    mpVisualizer->updateVisAttributes(mpVisualizer->getTimeManager()->getVisTime());
+    updateScene();
 }
 
 /*!

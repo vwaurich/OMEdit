@@ -66,6 +66,7 @@ class UpdateVisitor : public osg::NodeVisitor
   UpdateVisitor& operator=(const UpdateVisitor& uv) = delete;
   virtual void apply(osg::Geode& node);
   virtual void apply(osg::MatrixTransform& node);
+  void makeTransparent(osg::Geode& node);
 public:
   ShapeObject _shape;
 };
@@ -128,7 +129,7 @@ class OMVisualBase
   const std::string getPath() const;
   rapidxml::xml_node<>* getFirstXMLNode() const;
   const std::string getXMLFileName() const;
-
+  int getShapeObjectByID(std::string shapeID, ShapeObject** shapeOut);
 private:
   void appendVisVariable(const rapidxml::xml_node<>* node, std::vector<std::string>& visVariables) const;
 

@@ -98,6 +98,9 @@ public slots:
   void setPerspective(int value);
   void rotateCameraLeft();
   void rotateCameraRight();
+  void showShapePickContextMenu(const QPoint& pos);
+  void changeShapeTransparency();
+  void removeTransparencyForAllShapes();
 };
 
 #endif // ABSTRACTANIMATIONWINDOW_H

@@ -39,7 +39,7 @@
 #include <cassert>
 
 #include "ViewerWidget.h"
-
+#include "AbstractAnimationWindow.h"
 /*!
  * \brief Viewer::setUpThreading
  */
@@ -203,6 +203,17 @@ void ViewerWidget::mousePressEvent(QMouseEvent *event)
   getEventQueue()->mouseButtonPress(static_cast<float>(event->x()), static_cast<float>(event->y()), button);
 }
 
+std::string ViewerWidget::getSelectedShape()
+{
+  return mSelectedShape;
+}
+
+void ViewerWidget::setSelectedShape(std::string shape)
+{
+  mSelectedShape = shape;
+}
+
+
 /*!
  * \brief ViewerWidget::pickShape
  * Picks the name of the selected shape in the osg view
@@ -215,34 +226,20 @@ void ViewerWidget::pickShape(int x, int y)
   osgUtil::LineSegmentIntersector::Intersections intersections;
   if (mpSceneView->computeIntersections(mpSceneView->getCamera(),osgUtil::Intersector::WINDOW , x, y, intersections))
     {
+    //take the first intersection with a facette only
     osgUtil::LineSegmentIntersector::Intersections::iterator hitr = intersections.begin();
-    /*
-    //iterate over all intersections
-    for(osgUtil::LineSegmentIntersector::Intersections::iterator hitr = intersections.begin();
-      hitr != intersections.end();
-      ++hitr)
-    */
+
+    if (!hitr->nodePath.empty() && !(hitr->nodePath.back()->getName().empty()))
     {
-      if (!hitr->nodePath.empty() && !(hitr->nodePath.back()->getName().empty()))
-      {
-      // the geodes are identified by name.
-      std::cout<<"Object \""<<hitr->nodePath.back()->getName()<<"\""<<std::endl;
-      }
-      else if (hitr->drawable.valid())
-      {
-      std::cout<<"Object \""<<hitr->drawable->className()<<"\""<<std::endl;
-      }
-      /*
-      osg::Vec3d vec = hitr->getLocalIntersectPoint();
-      std::cout<<"        local coords vertex("<< hitr->getLocalIntersectPoint()<<")"<<"  normal("<<hitr->getLocalIntersectNormal()<<")"<<std::endl;
-      std::cout<<"        world coords vertex("<< hitr->getWorldIntersectPoint()<<")"<<"  normal("<<hitr->getWorldIntersectNormal()<<")"<<std::endl;
-      const osgUtil::LineSegmentIntersector::Intersection::IndexList& vil = hitr->indexList;
-      for(unsigned int i=0;i<vil.size();++i)
-      {
-        std::cout<<"        vertex indices ["<<i<<"] = "<<vil[i]<<std::endl;
-      }
-       */
+    mSelectedShape = hitr->nodePath.back()->getName();
+    //std::cout<<"Object identified by name "<<mSelectedShape<<std::endl;
     }
+    else if (hitr->drawable.valid())
+    {
+    mSelectedShape = hitr->drawable->className();
+    //std::cout<<"Object identified by its drawable "<<mSelectedShape<<std::endl;
+    }
+
   }
 }
 

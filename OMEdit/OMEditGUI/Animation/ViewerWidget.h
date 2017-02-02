@@ -68,6 +68,8 @@ class ViewerWidget : public GLWidget
 public:
   ViewerWidget(QWidget *pParent = 0, Qt::WindowFlags flags = 0);
   osgViewer::View* getSceneView() {return mpSceneView;}
+  std::string getSelectedShape();
+  void setSelectedShape(std::string shape);
 protected:
   virtual void paintEvent(QPaintEvent *paintEvent);
   virtual void paintGL();
@@ -87,6 +89,7 @@ private:
   osg::ref_ptr<Viewer> mpViewer;
   //osg viewer scene
   osgViewer::View* mpSceneView;
+  std::string mSelectedShape;
 };
 
 #endif // VIEWERWIDGET_H
