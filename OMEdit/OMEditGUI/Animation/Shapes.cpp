@@ -67,7 +67,7 @@ ShapeObject::ShapeObject()
           _mat(osg::Matrix(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)),
           _extra(ShapeObjectAttribute(0.0)),
       mTransparent(false),
-    mTextureImagePath("D:/Projekte/HPCOM/Literatur/Visualisierung/earthmap1k.jpg")
+    mTextureImagePath("")
 {
   _r[0] = ShapeObjectAttribute(0.1);
   _r[1] = ShapeObjectAttribute(0.1);

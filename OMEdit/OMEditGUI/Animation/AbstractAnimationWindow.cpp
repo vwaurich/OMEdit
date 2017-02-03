@@ -164,7 +164,7 @@ void AbstractAnimationWindow::applyCheckTexture()
         std::cout<<"Texture feature for DXF-Files is not applicable."<<std::endl;
       else
       {
-        shape->setTextureImagePath("D:/Projekte/HPCOM/Literatur/Visualisierung/Bild1.png");
+        shape->setTextureImagePath(QFileInfo(":/Resources/textures/check.png").absoluteFilePath().toStdString());
         mpVisualizer->updateVisAttributes(mpVisualizer->getTimeManager()->getVisTime());
         updateScene();
         mpViewerWidget->setSelectedShape("");
@@ -185,8 +185,10 @@ void AbstractAnimationWindow::applyCustomTexture()
         std::cout<<"Texture feature for DXF-Files is not applicable."<<std::endl;
       else
       {
-
-        shape->setTextureImagePath("D:/Projekte/HPCOM/Literatur/Visualisierung/sunmap.jpg");
+      QString fileName = StringHandler::getOpenFileName(this, QString("%1 - %2").arg(Helper::applicationName).arg(Helper::chooseFile),
+                                                          NULL, Helper::bitmapFileTypes, NULL);
+       std::cout<<"THE FileName"<<fileName.toStdString()<<std::endl;
+        shape->setTextureImagePath(fileName.toStdString());
         mpVisualizer->updateVisAttributes(mpVisualizer->getTimeManager()->getVisTime());
         updateScene();
         mpViewerWidget->setSelectedShape("");
@@ -208,6 +210,8 @@ void AbstractAnimationWindow::removeTransparencyForAllShapes()
     for(std::vector<ShapeObject>::iterator shape = shapes->begin() ; shape < shapes->end(); ++shape )
     {
     shape->setTransparency(false);
+    shape->setTextureImagePath("");
+
     }
     mpVisualizer->updateVisAttributes(mpVisualizer->getTimeManager()->getVisTime());
     updateScene();

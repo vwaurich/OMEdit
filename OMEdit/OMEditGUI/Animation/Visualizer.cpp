@@ -497,8 +497,6 @@ void UpdateVisitor::apply(osg::Geode& node)
     else if (_shape._type == "sphere")
     {
       draw->setShape(new osg::Sphere(osg::Vec3f(0.0, 0.0, 0.0), _shape._length.exp / 2.0));
-      //set texture
-      applyTexture(ss, _shape.getTextureImagePath());
     }
     else
     {
@@ -520,6 +518,8 @@ void UpdateVisitor::apply(osg::Geode& node)
     material->setDiffuse(osg::Material::FRONT, osg::Vec4f(_shape._color[0].exp / 255, _shape._color[1].exp / 255, _shape._color[2].exp / 255, 1.0));
     ss->setAttribute(material);
     node.setStateSet(ss);
+    //set texture
+    applyTexture(ss, _shape.getTextureImagePath());
     //set transparency
     if (_shape.getTransparency())
       makeTransparent(node);
@@ -530,28 +530,38 @@ void UpdateVisitor::apply(osg::Geode& node)
 void UpdateVisitor::applyTexture(osg::StateSet* ss, std::string imagePath)
 {
   //osg::Image *image = osgDB::readImageFile("D:/Projekte/HPCOM/Literatur/Visualisierung/earthmap1k.jpg");
-  osg::Image *image = osgDB::readImageFile(imagePath);
-  if (!image) {
-    std::cout << "Couldn't load texture." << std::endl;
-  }
-  osg::Texture2D *texture = new osg::Texture2D;
-  texture->setResizeNonPowerOfTwoHint(false);// dont output console message about scaling
-  texture->setDataVariance(osg::Object::DYNAMIC);
-  texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR);
-  texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
-  texture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP);
-  texture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP);
-  texture->setImage(image);
-  ss->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
+  if(imagePath.compare("") != 0)
+  {
+    osg::Image *image = osgDB::readImageFile(imagePath);
+    if (!image)
+    {
+      std::cout << "Couldn't load texture." <<imagePath<< std::endl;
+    }
+    osg::Texture2D *texture = new osg::Texture2D;
+    texture->setResizeNonPowerOfTwoHint(false);// dont output console message about scaling
+    texture->setDataVariance(osg::Object::DYNAMIC);
+    texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR);
+    texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+    texture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP);
+    texture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP);
+    texture->setImage(image);
+    ss->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
 
-  //set emission values
-  osg::Material *material;
-  if (NULL == ss->getAttribute(osg::StateAttribute::MATERIAL))
+    //set emission values
+    osg::Material *material;
+    if (NULL == ss->getAttribute(osg::StateAttribute::MATERIAL))
     material = new osg::Material();
-  else
+    else
     material = dynamic_cast<osg::Material*>(ss->getAttribute(osg::StateAttribute::MATERIAL));
-  material->setEmission(osg::Material::FRONT, osg::Vec4(0.8, 0.8, 0.8, 1.0));
-  ss->setAttribute(material);
+    material->setEmission(osg::Material::FRONT, osg::Vec4(0.8, 0.8, 0.8, 1.0));
+    material->setDiffuse(osg::Material::FRONT, osg::Vec4f(0.0,0.0,0.0,1.0));
+    ss->setAttribute(material);
+  }
+  else
+  {
+    ss->getTextureAttributeList().clear();
+    ss->getTextureModeList().clear();
+  }
 }
 
 
