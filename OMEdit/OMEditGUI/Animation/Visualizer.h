@@ -45,6 +45,8 @@
 #include <osg/ShapeDrawable>
 #include <osg/Material>
 #include <osgDB/ReadFile>
+#include <osg/Texture2D>
+#include <osg/TexMat>
 
 #include "AnimationUtil.h"
 #include "ExtraShapes.h"
