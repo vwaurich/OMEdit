@@ -66,7 +66,8 @@ ShapeObject::ShapeObject()
       _specCoeff(ShapeObjectAttribute(0.7)),
           _mat(osg::Matrix(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)),
           _extra(ShapeObjectAttribute(0.0)),
-      mTransparent(false)
+      mTransparent(false),
+    mTextureImagePath("D:/Projekte/HPCOM/Literatur/Visualisierung/earthmap1k.jpg")
 {
   _r[0] = ShapeObjectAttribute(0.1);
   _r[1] = ShapeObjectAttribute(0.1);
@@ -116,7 +117,7 @@ void ShapeObject::dumpVisAttributes() const
   std::cout << "    " << _mat(3, 0) << ", " << _mat(3, 1) << ", " << _mat(3, 2) << ", " << _mat(3, 3) << std::endl;
   std::cout << "extra " << _extra.getValueString() << std::endl;
   std::cout << "transparency " << mTransparent << std::endl;
-
+  std::cout << "texture " << mTextureImagePath << std::endl;
 }
 
 void ShapeObject::setTransparency(bool transp)
@@ -127,6 +128,16 @@ void ShapeObject::setTransparency(bool transp)
 bool ShapeObject::getTransparency()
 {
   return mTransparent;
+}
+
+void ShapeObject::setTextureImagePath(std::string imagePath)
+{
+  mTextureImagePath = imagePath;
+}
+
+std::string ShapeObject::getTextureImagePath()
+{
+  return mTextureImagePath;
 }
 
 /*

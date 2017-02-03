@@ -100,6 +100,8 @@ public slots:
   void rotateCameraRight();
   void showShapePickContextMenu(const QPoint& pos);
   void changeShapeTransparency();
+  void applyCheckTexture();
+  void applyCustomTexture();
   void removeTransparencyForAllShapes();
 };
 

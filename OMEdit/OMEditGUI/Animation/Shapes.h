@@ -70,6 +70,8 @@ class ShapeObject
   //void fetchVisAttributes(rapidxml::xml_node<>* node, ModelicaMatReader matReader,/* fmi1_import_t* fmu,*/ double time, bool useFMU);
   void setTransparency(bool transp);
   bool getTransparency();
+  void setTextureImagePath(std::string imagePath);
+  std::string getTextureImagePath();
  public:
   std::string _id;
   std::string _type;
@@ -88,6 +90,7 @@ class ShapeObject
   ShapeObjectAttribute _extra;
 private:
   bool mTransparent;
+  std::string mTextureImagePath;
 };
 
 struct rAndT

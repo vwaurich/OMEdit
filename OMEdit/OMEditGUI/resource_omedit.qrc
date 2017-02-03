@@ -168,5 +168,6 @@
         <file>Resources/icons/numbered-list.svg</file>
         <file>Resources/icons/link.svg</file>
         <file>Resources/icons/unlink.svg</file>
+				<file>Resources/textures/check.png</file>
     </qresource>
 </RCC>

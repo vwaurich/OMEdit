@@ -69,6 +69,7 @@ class UpdateVisitor : public osg::NodeVisitor
   virtual void apply(osg::Geode& node);
   virtual void apply(osg::MatrixTransform& node);
   void makeTransparent(osg::Geode& node);
+  void applyTexture(osg::StateSet* ss, std::string imagePath);
 public:
   ShapeObject _shape;
 };

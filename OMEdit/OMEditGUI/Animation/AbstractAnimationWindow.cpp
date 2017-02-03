@@ -109,16 +109,23 @@ void AbstractAnimationWindow::showShapePickContextMenu(const QPoint& pos)
   QMenu contextMenu(tr("Context menu"), this);
   QMenu shapeMenu(name, this);
   QAction action1("Change Transparency", this);
-  QAction action2("Reset All Shapes", this);
-  //if a shape is picked, we can set it transparent
+  QAction action2("Apply Check Texture", this);
+  QAction action3("Apply Custom Texture", this);
+  QAction resetAction("Reset All Shapes", this);
+  //if a shape is picked, we offer additional actions
   if (0 != QString::compare(name,QString("")))
   {
     contextMenu.addMenu(&shapeMenu);
     shapeMenu.addAction(&action1);
+    shapeMenu.addAction(&action2);
+    shapeMenu.addAction(&action3);
+
     connect(&action1, SIGNAL(triggered()), this, SLOT(changeShapeTransparency()));
+    connect(&action2, SIGNAL(triggered()), this, SLOT(applyCheckTexture()));
+    connect(&action3, SIGNAL(triggered()), this, SLOT(applyCustomTexture()));
   }
-  contextMenu.addAction(&action2);
-  connect(&action2, SIGNAL(triggered()), this, SLOT(removeTransparencyForAllShapes()));
+  contextMenu.addAction(&resetAction);
+  connect(&resetAction, SIGNAL(triggered()), this, SLOT(removeTransparencyForAllShapes()));
   connect(&contextMenu, SIGNAL(aboutToHide()), this, SLOT(doSomething()));
   contextMenu.exec(QWidget::mapToGlobal(pos));
 }
@@ -137,6 +144,49 @@ void AbstractAnimationWindow::changeShapeTransparency()
       else
       {
         shape->setTransparency(not shape->getTransparency());
+        mpVisualizer->updateVisAttributes(mpVisualizer->getTimeManager()->getVisTime());
+        updateScene();
+        mpViewerWidget->setSelectedShape("");
+      }
+    }
+}
+
+/*!
+ * \brief AbstractAnimationWindow::applyCheckTexture
+ * changes the transparency selection of a shape
+ */
+void AbstractAnimationWindow::applyCheckTexture()
+{
+    ShapeObject* shape = nullptr;
+    if (mpVisualizer->getBaseData()->getShapeObjectByID(mpViewerWidget->getSelectedShape(),&shape))
+    {
+      if (shape->_type.compare("dxf") == 0)
+        std::cout<<"Texture feature for DXF-Files is not applicable."<<std::endl;
+      else
+      {
+        shape->setTextureImagePath("D:/Projekte/HPCOM/Literatur/Visualisierung/Bild1.png");
+        mpVisualizer->updateVisAttributes(mpVisualizer->getTimeManager()->getVisTime());
+        updateScene();
+        mpViewerWidget->setSelectedShape("");
+      }
+    }
+}
+
+/*!
+ * \brief AbstractAnimationWindow::applyCustomTexture
+ * changes the transparency selection of a shape
+ */
+void AbstractAnimationWindow::applyCustomTexture()
+{
+    ShapeObject* shape = nullptr;
+    if (mpVisualizer->getBaseData()->getShapeObjectByID(mpViewerWidget->getSelectedShape(),&shape))
+    {
+      if (shape->_type.compare("dxf") == 0)
+        std::cout<<"Texture feature for DXF-Files is not applicable."<<std::endl;
+      else
+      {
+
+        shape->setTextureImagePath("D:/Projekte/HPCOM/Literatur/Visualisierung/sunmap.jpg");
         mpVisualizer->updateVisAttributes(mpVisualizer->getTimeManager()->getVisTime());
         updateScene();
         mpViewerWidget->setSelectedShape("");
