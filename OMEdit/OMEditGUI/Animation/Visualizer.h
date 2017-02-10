@@ -45,6 +45,8 @@
 #include <osg/ShapeDrawable>
 #include <osg/Material>
 #include <osgDB/ReadFile>
+#include <osg/Texture2D>
+#include <osg/TexMat>
 
 #include "AnimationUtil.h"
 #include "ExtraShapes.h"
@@ -67,6 +69,7 @@ class UpdateVisitor : public osg::NodeVisitor
   virtual void apply(osg::Geode& node);
   virtual void apply(osg::MatrixTransform& node);
   void makeTransparent(osg::Geode& node, float transpCoeff);
+  void applyTexture(osg::StateSet* ss, std::string imagePath);
 public:
   ShapeObject _shape;
 };

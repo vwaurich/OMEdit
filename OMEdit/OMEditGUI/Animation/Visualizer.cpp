@@ -504,7 +504,6 @@ void UpdateVisitor::apply(osg::Geode& node)
     else
     {
       std::cout<<"Unknown type "<<_shape._type<<", we make a capsule."<<std::endl;
-      //string id = string(visAttr.type.begin(), visAttr.type.begin()+11);
       draw->setShape(new osg::Capsule(osg::Vec3f(0.0, 0.0, 0.0), 0.1, 0.5));
     }
     //std::cout<<"SHAPE "<<draw->getShape()->className()<<std::endl;
@@ -514,20 +513,56 @@ void UpdateVisitor::apply(osg::Geode& node)
   if (_shape._type.compare("dxf") != 0)
   {
     osg::Material *material;
-    if (NULL == node.getStateSet()->getAttribute(osg::StateAttribute::MATERIAL))
+    if (!node.getStateSet()->getAttribute(osg::StateAttribute::MATERIAL))
       material = new osg::Material();
     else
       material = dynamic_cast<osg::Material*>(ss->getAttribute(osg::StateAttribute::MATERIAL));
-
     material->setDiffuse(osg::Material::FRONT, osg::Vec4f(_shape._color[0].exp / 255, _shape._color[1].exp / 255, _shape._color[2].exp / 255, 1.0));
     ss->setAttribute(material);
+
+    //apply texture
+    applyTexture(ss, _shape.getTextureImagePath());
     node.setStateSet(ss);
-    //set transparency
-    if (_shape.getTransparency())
-      makeTransparent(node, _shape.getTransparency());
   }
 
+  //set transparency
+  makeTransparent(node, _shape.getTransparency());
+
   traverse(node);
+}
+
+
+void UpdateVisitor::applyTexture(osg::StateSet* ss, std::string imagePath)
+{
+  if (imagePath.compare(""))
+  {
+    osg::Image *image = osgDB::readImageFile(imagePath);
+    if (!image)
+    {
+      std::cout << "Couldn't load texture." << std::endl;
+    }
+    osg::Texture2D *texture = new osg::Texture2D;
+    texture->setDataVariance(osg::Object::DYNAMIC);
+    texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR);
+    texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+    texture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP);
+    texture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP);
+    texture->setImage(image);
+    texture->setResizeNonPowerOfTwoHint(false);// dont output console message about scaling
+    ss->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
+
+    osg::Material *material;
+    if (!ss->getAttribute(osg::StateAttribute::MATERIAL))
+      material = new osg::Material();
+    else
+      material = dynamic_cast<osg::Material*>(ss->getAttribute(osg::StateAttribute::MATERIAL));
+    //material->setEmission(osg::Material::FRONT, osg::Vec4(0.6, 0.6, 0.6, 1.0));
+  }
+  else
+  {
+    ss->getTextureAttributeList().clear();
+    ss->getTextureModeList().clear();
+  }
 }
 
 /*!
@@ -537,22 +572,23 @@ void UpdateVisitor::apply(osg::Geode& node)
  */
 void UpdateVisitor::makeTransparent(osg::Geode& node, float transpCoeff)
 {
-  node.getStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON );
-  node.getStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
-  osg::Material *material;
-  if (NULL == node.getStateSet()->getAttribute(osg::StateAttribute::MATERIAL))
-  {
-    material = new osg::Material();
+  if (_shape.getTransparency())
+      {
+      node.getStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON );
+      node.getStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+      osg::Material *material;
+      if (NULL == node.getStateSet()->getAttribute(osg::StateAttribute::MATERIAL))
+      {
+      material = new osg::Material();
+      }
+      else
+      {
+      material = dynamic_cast<osg::Material*>(node.getStateSet()->getAttribute(osg::StateAttribute::MATERIAL));
+      }
+      material->setTransparency(osg::Material::FRONT_AND_BACK, transpCoeff);
+      node.getStateSet()->setAttributeAndModes(material, osg::StateAttribute::OVERRIDE);
   }
-  else
-  {
-    material = dynamic_cast<osg::Material*>(node.getStateSet()->getAttribute(osg::StateAttribute::MATERIAL));
-  }
-  material->setTransparency(osg::Material::FRONT_AND_BACK, transpCoeff);
-  node.getStateSet()->setAttributeAndModes(material, osg::StateAttribute::OVERRIDE);
 }
-
-
 
 InfoVisitor::InfoVisitor()
   : _level(0)

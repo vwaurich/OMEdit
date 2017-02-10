@@ -248,19 +248,78 @@ void ViewerWidget::showShapePickContextMenu(const QPoint& pos)
   QAction action0(QIcon(":/Resources/icons/undo.svg"), tr("Reset All Shapes"), this);
   QAction action1(QIcon(":/Resources/icons/transparency.svg"), tr("Change Transparency"), this);
   QAction action2(QIcon(":/Resources/icons/invisible.svg"), tr("Make Shape Invisible"), this);
+  QAction action3(QIcon(":/Resources/icons/checkered.svg"), tr("Apply Check Texture"), this);
+  QAction action4(QIcon(":/Resources/icons/texture.svg"), tr("Apply Custom Texture"), this);
 
   //if a shape is picked, we can set it transparent
   if (0 != QString::compare(name,QString(""))) {
     contextMenu.addMenu(&shapeMenu);
     shapeMenu.addAction( &action1);
     shapeMenu.addAction( &action2);
+    shapeMenu.addAction( &action3);
+    shapeMenu.addAction( &action4);
     connect(&action1, SIGNAL(triggered()), this, SLOT(changeShapeTransparency()));
     connect(&action2, SIGNAL(triggered()), this, SLOT(makeShapeInvisible()));
+    connect(&action3, SIGNAL(triggered()), this, SLOT(applyCheckTexture()));
+    connect(&action4, SIGNAL(triggered()), this, SLOT(applyCustomTexture()));
   }
   contextMenu.addAction(&action0);
   connect(&action0, SIGNAL(triggered()), this, SLOT(removeTransparencyForAllShapes()));
   contextMenu.exec(this->mapToGlobal(pos));
 }
+
+/*!
+ * \brief ViewerWidget::applyCheckTexture
+ * changes the transparency selection of a shape
+ */
+void ViewerWidget::applyCheckTexture()
+{
+    ShapeObject* shape = nullptr;
+    if ((shape = mpAnimationWidget->getVisualizer()->getBaseData()->getShapeObjectByID(mSelectedShape)))
+    {
+      if (shape->_type.compare("dxf") == 0)
+      {
+        QString msg = tr("Texture feature for DXF-Files is not applicable.");
+        MessagesWidget::instance()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0, msg, Helper::scriptingKind,
+                                                                    Helper::notificationLevel));
+      }
+      else
+      {
+        shape->setTextureImagePath("D:/Projekte/HPCOM/Literatur/Visualisierung/Bild1.png");
+        mpAnimationWidget->getVisualizer()->updateVisAttributes(mpAnimationWidget->getVisualizer()->getTimeManager()->getVisTime());
+        mpAnimationWidget->updateScene();
+        mSelectedShape = "";
+      }
+    }
+}
+
+/*!
+ * \brief ViewerWidget::applyCustomTexture
+ * changes the transparency selection of a shape
+ */
+void ViewerWidget::applyCustomTexture()
+{
+    ShapeObject* shape = nullptr;
+    if ((shape = mpAnimationWidget->getVisualizer()->getBaseData()->getShapeObjectByID(mSelectedShape)))
+    {
+      if (shape->_type.compare("dxf") == 0)
+      {
+        QString msg = tr("Texture feature for DXF-Files is not applicable.");
+        MessagesWidget::instance()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0, msg, Helper::scriptingKind,
+                                                                    Helper::notificationLevel));
+      }
+      else
+      {
+        QString fileName = StringHandler::getOpenFileName(this, QString("%1 - %2").arg(Helper::applicationName).arg(Helper::chooseFile),
+                                                              NULL, Helper::bitmapFileTypes, NULL);
+        shape->setTextureImagePath(fileName.toStdString());
+        mpAnimationWidget->getVisualizer()->updateVisAttributes(mpAnimationWidget->getVisualizer()->getTimeManager()->getVisTime());
+        mpAnimationWidget->updateScene();
+        mSelectedShape = "";
+      }
+    }
+}
+
 
 /*!
  * \brief ViewerWidget::changeShapeTransparency
@@ -322,6 +381,7 @@ void ViewerWidget::removeTransparencyForAllShapes()
     shapes = &mpAnimationWidget->getVisualizer()->getBaseData()->_shapes;
     for (std::vector<ShapeObject>::iterator shape = shapes->begin() ; shape < shapes->end(); ++shape) {
       shape->setTransparency(0.0);
+      shape->setTextureImagePath("");
     }
     mpAnimationWidget->getVisualizer()->updateVisAttributes(mpAnimationWidget->getVisualizer()->getTimeManager()->getVisTime());
     mpAnimationWidget->updateScene();

@@ -66,7 +66,9 @@ ShapeObject::ShapeObject()
       _specCoeff(ShapeObjectAttribute(0.7)),
           _mat(osg::Matrix(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)),
           _extra(ShapeObjectAttribute(0.0)),
-      mTransparent(0.0)
+      mTransparent(0.0),
+      mTextureImagePath("")
+
 {
   _r[0] = ShapeObjectAttribute(0.1);
   _r[1] = ShapeObjectAttribute(0.1);

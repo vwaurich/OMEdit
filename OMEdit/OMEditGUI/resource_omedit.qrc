@@ -170,5 +170,7 @@
         <file>Resources/icons/unlink.svg</file>
         <file>Resources/icons/invisible.svg</file>
         <file>Resources/icons/transparency.svg</file>
+        <file>Resources/icons/checkered.svg</file>
+        <file>Resources/icons/texture.svg</file>
     </qresource>
 </RCC>

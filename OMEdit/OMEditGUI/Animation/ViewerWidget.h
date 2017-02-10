@@ -100,6 +100,8 @@ public slots:
   void changeShapeTransparency();
   void removeTransparencyForAllShapes();
   void makeShapeInvisible();
+  void applyCheckTexture();
+  void applyCustomTexture();
 };
 
 #endif // VIEWERWIDGET_H
