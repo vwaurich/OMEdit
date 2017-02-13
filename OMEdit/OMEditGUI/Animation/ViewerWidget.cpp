@@ -35,6 +35,7 @@
 #include <osgViewer/ViewerEventHandlers>
 
 #include <QPainter>
+#include <QColorDialog>
 #include <QKeyEvent>
 #include <cassert>
 
@@ -248,8 +249,9 @@ void ViewerWidget::showShapePickContextMenu(const QPoint& pos)
   QAction action0(QIcon(":/Resources/icons/undo.svg"), tr("Reset All Shapes"), this);
   QAction action1(QIcon(":/Resources/icons/transparency.svg"), tr("Change Transparency"), this);
   QAction action2(QIcon(":/Resources/icons/invisible.svg"), tr("Make Shape Invisible"), this);
-  QAction action3(QIcon(":/Resources/icons/checkered.svg"), tr("Apply Check Texture"), this);
-  QAction action4(QIcon(":/Resources/icons/texture.svg"), tr("Apply Custom Texture"), this);
+  QAction action3(QIcon(":/Resources/icons/changeColor.svg"), tr("Change Color"), this);
+  QAction action4(QIcon(":/Resources/icons/checkered.svg"), tr("Apply Check Texture"), this);
+  QAction action5(QIcon(":/Resources/icons/texture.svg"), tr("Apply Custom Texture"), this);
 
   //if a shape is picked, we can set it transparent
   if (0 != QString::compare(name,QString(""))) {
@@ -258,10 +260,13 @@ void ViewerWidget::showShapePickContextMenu(const QPoint& pos)
     shapeMenu.addAction( &action2);
     shapeMenu.addAction( &action3);
     shapeMenu.addAction( &action4);
+    shapeMenu.addAction( &action5);
     connect(&action1, SIGNAL(triggered()), this, SLOT(changeShapeTransparency()));
     connect(&action2, SIGNAL(triggered()), this, SLOT(makeShapeInvisible()));
-    connect(&action3, SIGNAL(triggered()), this, SLOT(applyCheckTexture()));
-    connect(&action4, SIGNAL(triggered()), this, SLOT(applyCustomTexture()));
+    connect(&action3, SIGNAL(triggered()), this, SLOT(changeShapeColor()));
+    connect(&action4, SIGNAL(triggered()), this, SLOT(applyCheckTexture()));
+    connect(&action5, SIGNAL(triggered()), this, SLOT(applyCustomTexture()));
+
   }
   contextMenu.addAction(&action0);
   connect(&action0, SIGNAL(triggered()), this, SLOT(removeTransparencyForAllShapes()));
@@ -362,6 +367,42 @@ void ViewerWidget::makeShapeInvisible()
       mSelectedShape = "";
     } else {
       shape->setTransparency(1.0);
+      mpAnimationWidget->getVisualizer()->updateVisAttributes(mpAnimationWidget->getVisualizer()->getTimeManager()->getVisTime());
+      mpAnimationWidget->updateScene();
+      mSelectedShape = "";
+    }
+  }
+}
+
+/*!
+ * \brief ViewerWidget::changeShapeColor
+ * opens a color dialog and selects a new color for the shape
+ */
+void ViewerWidget::changeShapeColor()
+{
+  ShapeObject* shape = nullptr;
+  if ((shape = mpAnimationWidget->getVisualizer()->getBaseData()->getShapeObjectByID(mSelectedShape))) {
+    if (shape->_type.compare("dxf") == 0)
+    {
+      QString msg = tr("Invisibility is not applicable for DXF-Files.");
+      MessagesWidget::instance()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0, msg, Helper::scriptingKind,
+                                                            Helper::notificationLevel));
+      mSelectedShape = "";
+    }
+    else
+    {
+      QColor currentColor = QColor(shape->_color[0].exp,shape->_color[1].exp,shape->_color[2].exp);
+      QColor color = QColorDialog::getColor(currentColor, this,"Shape Color",  QColorDialog::DontUseNativeDialog);
+      if(currentColor.isValid())
+      {
+        shape->setColor(color);
+      }
+      else
+      {
+          QString msg = tr("The selected color is not valid.");
+          MessagesWidget::instance()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0, msg, Helper::scriptingKind,
+                                                                Helper::notificationLevel));
+      }
       mpAnimationWidget->getVisualizer()->updateVisAttributes(mpAnimationWidget->getVisualizer()->getTimeManager()->getVisTime());
       mpAnimationWidget->updateScene();
       mSelectedShape = "";

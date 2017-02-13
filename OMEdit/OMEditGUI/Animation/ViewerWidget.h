@@ -102,6 +102,8 @@ public slots:
   void makeShapeInvisible();
   void applyCheckTexture();
   void applyCustomTexture();
+  void changeShapeColor();
+
 };
 
 #endif // VIEWERWIDGET_H

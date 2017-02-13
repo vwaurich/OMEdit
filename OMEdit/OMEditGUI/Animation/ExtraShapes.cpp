@@ -75,8 +75,7 @@ Pipecylinder::Pipecylinder(float rI, float rO, float l) :
   osg::Vec3Array* vertices = new osg::Vec3Array;
   osg::Vec3Array* normals = new osg::Vec3Array;
   osg::Vec2Array* texcoords = new osg::Vec2Array;
-  float radiusRatioShift = rI/rO*0.5;
-
+  float radiusRatioShift = rI/rO*0.5f;
   //we need so set the vertices multiple times to have a unique set of vertices per facet.
   //Thats needed for the normals which are assigned per vertex.
   //Also keep in mind to normalize the normals
@@ -93,7 +92,8 @@ Pipecylinder::Pipecylinder(float rI, float rO, float l) :
   for (int i = 0; i < nEdges; i++)  {
     vertices->push_back(osg::Vec3(sin(phi*i)*rO, cos(phi*i)*rO, 0));
     normals->push_back(osg::Vec3(0.0f,0.0f,-1.0f));
-    texcoords->push_back((osg::Vec2(sin(phi*i)+0.5f, cos(phi*i)+0.5f)));
+    texcoords->push_back((osg::Vec2((sin(phi*i)*0.5f)+0.5f, (cos(phi*i)*0.5f)+0.5f)));
+
     vertIdx++;
   }
   //THE TOP PLANE VERTICES
@@ -108,7 +108,7 @@ Pipecylinder::Pipecylinder(float rI, float rO, float l) :
   for (int i = 0; i < nEdges; i++) {
     vertices->push_back(osg::Vec3(sin(phi*i)*rO, cos(phi*i)*rO, l));
     normals->push_back(osg::Vec3(0.0f,0.0f,1.0f));
-    texcoords->push_back(osg::Vec2(sin(phi*i)+0.5f, cos(phi*i)+0.5f));
+    texcoords->push_back(osg::Vec2((sin(phi*i)*0.5f)+0.5f, (cos(phi*i)*0.5f)+0.5f));
     vertIdx++;
   }
 

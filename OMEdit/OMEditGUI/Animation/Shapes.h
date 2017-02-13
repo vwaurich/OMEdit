@@ -44,6 +44,7 @@
 #include <osg/Matrix>
 #include <osg/Uniform>
 
+#include <QColor>
 
 class ShapeObjectAttribute
 {
@@ -52,6 +53,7 @@ class ShapeObjectAttribute
   ShapeObjectAttribute(float value);
   ~ShapeObjectAttribute() = default;
   std::string getValueString() const;
+  void setConstValue(float e){exp=e, isConst=true;}
  public:
   bool isConst;
   float exp;
@@ -72,6 +74,10 @@ class ShapeObject
   float getTransparency() {return mTransparent;}
   void setTextureImagePath(std::string imagePath) {mTextureImagePath = imagePath;}
   std::string getTextureImagePath() {return mTextureImagePath;}
+  void setColor(QColor col) {_color[0].setConstValue(col.red());
+                             _color[1].setConstValue(col.green());
+                             _color[2].setConstValue(col.blue());}
+  QColor getColor() {return QColor(_color[0].exp, _color[1].exp, _color[2].exp);}
  public:
   std::string _id;
   std::string _type;

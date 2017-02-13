@@ -172,5 +172,6 @@
         <file>Resources/icons/transparency.svg</file>
         <file>Resources/icons/checkered.svg</file>
         <file>Resources/icons/texture.svg</file>
+        <file>Resources/icons/changeColor.svg</file>
     </qresource>
 </RCC>
