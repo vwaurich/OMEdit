@@ -384,14 +384,14 @@ void ViewerWidget::changeShapeColor()
   if ((shape = mpAnimationWidget->getVisualizer()->getBaseData()->getShapeObjectByID(mSelectedShape))) {
     if (shape->_type.compare("dxf") == 0)
     {
-      QString msg = tr("Invisibility is not applicable for DXF-Files.");
+      QString msg = tr("Changing the color is not applicable for DXF-Files.");
       MessagesWidget::instance()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0, msg, Helper::scriptingKind,
                                                             Helper::notificationLevel));
       mSelectedShape = "";
     }
     else
     {
-      QColor currentColor = QColor(shape->_color[0].exp,shape->_color[1].exp,shape->_color[2].exp);
+      QColor currentColor = shape->getColor();
       QColor color = QColorDialog::getColor(currentColor, this,"Shape Color",  QColorDialog::DontUseNativeDialog);
       if(currentColor.isValid())
       {
