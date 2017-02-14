@@ -463,13 +463,12 @@ void UpdateVisitor::apply(osg::Geode& node)
   //std::cout<<"GEODE "<< _shape._id<<" "<<_shape.getTransparency()<<std::endl;
   osg::ref_ptr<osg::StateSet> ss = node.getOrCreateStateSet();
   node.setName(_shape._id);
+
   //its a drawable and not a cad file so we have to create a new drawable
   if (_shape._type.compare("dxf") != 0 and (_shape._type.compare("stl") != 0))
   {
     osg::ref_ptr<osg::Drawable> draw = node.getDrawable(0);
     draw->dirtyDisplayList();
-    //osg::ref_ptr<osg::ShapeDrawable> shapeDraw = dynamic_cast<osg::ShapeDrawable*>(draw.get());
-    //shapeDraw->setColor(osg::Vec4(visAttr.color,1.0));
     if (_shape._type == "pipe")
     {
       node.removeDrawable(draw);
@@ -512,14 +511,7 @@ void UpdateVisitor::apply(osg::Geode& node)
   //dxf files are treated separately since they are constructed natively, including color
   if (_shape._type.compare("dxf") != 0)
   {
-    osg::Material *material;
-    if (!node.getStateSet()->getAttribute(osg::StateAttribute::MATERIAL))
-      material = new osg::Material();
-    else
-      material = dynamic_cast<osg::Material*>(ss->getAttribute(osg::StateAttribute::MATERIAL));
-    material->setDiffuse(osg::Material::FRONT, osg::Vec4f(_shape._color[0].exp / 255, _shape._color[1].exp / 255, _shape._color[2].exp / 255, 1.0));
-    ss->setAttribute(material);
-
+    changeColor(ss, _shape._color[0].exp, _shape._color[1].exp, _shape._color[2].exp);
     //apply texture
     applyTexture(ss, _shape.getTextureImagePath());
     node.setStateSet(ss);
@@ -531,7 +523,25 @@ void UpdateVisitor::apply(osg::Geode& node)
   traverse(node);
 }
 
+/*!
+ * \brief UpdateVisitor::changeColor
+ * changes color for a geode
+ */
+void UpdateVisitor::changeColor(osg::StateSet* ss, float r, float g, float b)
+{
+  osg::Material *material;
+  if (!ss->getAttribute(osg::StateAttribute::MATERIAL))
+    material = new osg::Material();
+  else
+    material = dynamic_cast<osg::Material*>(ss->getAttribute(osg::StateAttribute::MATERIAL));
+  material->setDiffuse(osg::Material::FRONT, osg::Vec4f(r / 255, g / 255, b / 255, 1.0));
+  ss->setAttribute(material);
+}
 
+/*!
+ * \brief UpdateVisitor::applyTexture
+ * sets a texture for a geode
+ */
 void UpdateVisitor::applyTexture(osg::StateSet* ss, std::string imagePath)
 {
   if (imagePath.compare(""))
@@ -550,13 +560,6 @@ void UpdateVisitor::applyTexture(osg::StateSet* ss, std::string imagePath)
     texture->setImage(image);
     texture->setResizeNonPowerOfTwoHint(false);// dont output console message about scaling
     ss->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
-
-    osg::Material *material;
-    if (!ss->getAttribute(osg::StateAttribute::MATERIAL))
-      material = new osg::Material();
-    else
-      material = dynamic_cast<osg::Material*>(ss->getAttribute(osg::StateAttribute::MATERIAL));
-    //material->setEmission(osg::Material::FRONT, osg::Vec4(0.6, 0.6, 0.6, 1.0));
   }
   else
   {
@@ -568,7 +571,6 @@ void UpdateVisitor::applyTexture(osg::StateSet* ss, std::string imagePath)
 /*!
  * \brief UpdateVisitor::makeTransparent
  * makes a geode transparent
- * \param event
  */
 void UpdateVisitor::makeTransparent(osg::Geode& node, float transpCoeff)
 {
@@ -579,11 +581,11 @@ void UpdateVisitor::makeTransparent(osg::Geode& node, float transpCoeff)
       osg::Material *material;
       if (NULL == node.getStateSet()->getAttribute(osg::StateAttribute::MATERIAL))
       {
-      material = new osg::Material();
+        material = new osg::Material();
       }
       else
       {
-      material = dynamic_cast<osg::Material*>(node.getStateSet()->getAttribute(osg::StateAttribute::MATERIAL));
+        material = dynamic_cast<osg::Material*>(node.getStateSet()->getAttribute(osg::StateAttribute::MATERIAL));
       }
       material->setTransparency(osg::Material::FRONT_AND_BACK, transpCoeff);
       node.getStateSet()->setAttributeAndModes(material, osg::StateAttribute::OVERRIDE);
