@@ -34,6 +34,16 @@
 
 #include "Visualizer.h"
 
+#include <QGLWidget>
+#include <QImage>
+#include <osg/Image>
+#include <osg/Shape>
+#include <osg/Node>
+#include <osgDB/Export>
+#include <osgDB/Registry>
+#include <osgDB/WriteFile>
+
+#include <Util/Utilities.h>
 
 OMVisualBase::OMVisualBase(const std::string& modelFile, const std::string& path)
   : _shapes(),
@@ -61,6 +71,24 @@ ShapeObject* OMVisualBase::getShapeObjectByID(std::string shapeID)
   return 0;
 }
 
+/*!
+ * \brief OMVisualBase::getShapeObjectIndexByID
+ * get the shapeObjectIndex with the same shapeID
+ *\param the name of the shape
+ *\return the selected shape
+ */
+int OMVisualBase::getShapeObjectIndexByID(std::string shapeID)
+{
+  int i = 0;
+  for(std::vector<ShapeObject>::iterator shape =_shapes.begin() ; shape < _shapes.end(); ++shape )
+  {
+      if(shape->_id == shapeID) {
+        return i;
+      }
+   i +=1;
+  }
+  return -1;
+}
 
 void OMVisualBase::initXMLDoc()
 {
@@ -282,6 +310,19 @@ TimeManager* VisualizerAbstract::getTimeManager() const
   return mpTimeManager;
 }
 
+void VisualizerAbstract::modifyShape(std::string shapeName)
+{
+  int shapeIdx = getBaseData()->getShapeObjectIndexByID(shapeName);
+  ShapeObject* shape = getBaseData()->getShapeObjectByID(shapeName);
+  shape->setStateSetAction(stateSetAction::modify);
+  mpUpdateVisitor->_shape = *shape;
+  // Get the scene graph nodes and stuff.
+  osg::ref_ptr<osg::Node> child = mpOMVisScene->getScene().getRootNode()->getChild(shapeIdx);  // the transformation
+  child->accept(*mpUpdateVisitor);
+  shape->setStateSetAction(stateSetAction::update);
+}
+
+
 void VisualizerAbstract::sceneUpdate()
 {
   //measure realtime
@@ -463,10 +504,13 @@ void UpdateVisitor::apply(osg::Geode& node)
   //std::cout<<"GEODE "<< _shape._id<<" "<<_shape.getTransparency()<<std::endl;
   osg::ref_ptr<osg::StateSet> ss = node.getOrCreateStateSet();
   node.setName(_shape._id);
-
-  //its a drawable and not a cad file so we have to create a new drawable
-  if (_shape._type.compare("dxf") != 0 and (_shape._type.compare("stl") != 0))
+  switch(_shape.getStateSetAction())
   {
+  case(stateSetAction::update):
+   {
+    //its a drawable and not a cad file so we have to create a new drawable
+    if (_shape._type.compare("dxf") != 0 and (_shape._type.compare("stl") != 0))
+    {
     osg::ref_ptr<osg::Drawable> draw = node.getDrawable(0);
     draw->dirtyDisplayList();
     if (_shape._type == "pipe")
@@ -507,19 +551,34 @@ void UpdateVisitor::apply(osg::Geode& node)
     }
     //std::cout<<"SHAPE "<<draw->getShape()->className()<<std::endl;
     node.addDrawable(draw.get());
-  }
-  //dxf files are treated separately since they are constructed natively, including color
-  if (_shape._type.compare("dxf") != 0)
-  {
-    changeColor(ss, _shape._color[0].exp, _shape._color[1].exp, _shape._color[2].exp);
-    //apply texture
-    applyTexture(ss, _shape.getTextureImagePath());
-    node.setStateSet(ss);
-  }
+    }
+    break;
+   }//end case
 
+  case(stateSetAction::modify):
+   {
+      //apply texture
+      applyTexture(ss, _shape.getTextureImagePath());
+
+      break;
+    }//end case
+
+   default:
+   {break;}
+
+  }//end switch
+
+  //set color
+  if (_shape._type.compare("dxf") != 0)
+    changeColor(ss, _shape._color[0].exp, _shape._color[1].exp, _shape._color[2].exp);
   //set transparency
   makeTransparent(node, _shape.getTransparency());
 
+  node.setStateSet(ss);
+  if (stateSetAction::modify == _shape.getStateSetAction())
+    std::cout<<"MODIFIED "<<_shape._id<<std::endl;
+  if (stateSetAction::update == _shape.getStateSetAction())
+    std::cout<<"UDPATED "<<_shape._id<<std::endl;
   traverse(node);
 }
 
@@ -546,7 +605,27 @@ void UpdateVisitor::applyTexture(osg::StateSet* ss, std::string imagePath)
 {
   if (imagePath.compare(""))
   {
-    osg::Image *image = osgDB::readImageFile(imagePath);
+    osg::Image *image = nullptr;
+    std::string resIdent = ":/Resources";
+    if(!imagePath.compare(0,resIdent.length(),resIdent))
+    {
+      std::cout<<"imagePath "<<"  "<<imagePath<<std::endl;
+      QImage* qim = new QImage(QString::fromStdString(imagePath));
+      QFile file = QFile(":/Resources/bitmaps/check.png");
+      QFile::copy(file, "C:/Users/waurich/AppData/Local/Temp/OpenModelica/OMEdit/aha.png");
+      std::cout<<"tempdir "<<"  "<<Utilities::tempDirectory().toStdString()<<std::endl;
+
+      QString imageFileName = Utilities::tempDirectory()+"tempTextureImage.png";
+      std::cout<<"imageFileName "<<"  "<<imageFileName.toStdString()<<std::endl;
+      bool b = qim->save(imageFileName);
+      std::cout<<"new path "<<b<<"  "<<imageFileName.toStdString()<<std::endl;
+      image = osgDB::readImageFile(imageFileName.toStdString());
+    }
+    else
+    {
+      image = osgDB::readImageFile(imagePath);
+    }
+
     if (!image)
     {
       std::cout << "Couldn't load texture." << std::endl;
@@ -557,6 +636,56 @@ void UpdateVisitor::applyTexture(osg::StateSet* ss, std::string imagePath)
     texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
     texture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP);
     texture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP);
+    texture->setImage(image);
+    texture->setResizeNonPowerOfTwoHint(false);// dont output console message about scaling
+    ss->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
+  }
+  else
+  {
+    ss->getTextureAttributeList().clear();
+    ss->getTextureModeList().clear();
+  }
+}
+
+
+osg::Image* UpdateVisitor::convertImage(const QImage& iImage)
+{
+   osg::Image* osgImage = new osg::Image();
+   if (false == iImage.isNull()) {
+      QImage glImage = QGLWidget::convertToGLFormat(iImage);
+      if (false == glImage.isNull()) {
+         unsigned char* data = new unsigned char[glImage.byteCount()];
+         for(int i=0; i < glImage.byteCount(); ++i) {
+            data[i] = glImage.bits()[i];
+         }
+         osgImage->setImage(glImage.width(), glImage.height(), 1, 4, GL_RGBA, GL_UNSIGNED_BYTE, data, osg::Image::USE_NEW_DELETE, 1);
+      }
+   }
+   return osgImage;
+}
+
+/*!
+ * \brief UpdateVisitor::applyTexture
+ * sets a texture for a geode
+ */
+void UpdateVisitor::applyTexture_noCopy(osg::StateSet* ss, std::string imagePath)
+{
+  if (imagePath.compare(""))
+  {
+    //osg::Image *image = osgDB::readImageFile(imagePath);
+    QImage* qim = new QImage(":/Resources/bitmaps/check.png");
+    osg::Image *image = new osg::Image();
+    image = convertImage(*qim);
+    image->setInternalTextureFormat(GL_RGBA);
+    if (!image)
+    {
+      std::cout << "Couldn't load texture." << std::endl;
+    }
+    osg::Texture2D *texture = new osg::Texture2D;
+    texture->setDataVariance(osg::Object::DYNAMIC);
+    texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR);
+    texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+    texture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP);
     texture->setImage(image);
     texture->setResizeNonPowerOfTwoHint(false);// dont output console message about scaling
     ss->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);

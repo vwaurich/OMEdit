@@ -282,17 +282,19 @@ void ViewerWidget::applyCheckTexture()
     ShapeObject* shape = nullptr;
     if ((shape = mpAnimationWidget->getVisualizer()->getBaseData()->getShapeObjectByID(mSelectedShape)))
     {
-      if (shape->_type.compare("dxf") == 0)
+      if (shape->_type.compare("dxf") == 0 or shape->_type.compare("stl") == 0)
       {
-        QString msg = tr("Texture feature for DXF-Files is not applicable.");
+        QString msg = tr("Texture feature for CAD-Files is not applicable.");
         MessagesWidget::instance()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0, msg, Helper::scriptingKind,
                                                                     Helper::notificationLevel));
       }
       else
       {
-        shape->setTextureImagePath("D:/Projekte/HPCOM/Literatur/Visualisierung/Bild1.png");
-        mpAnimationWidget->getVisualizer()->updateVisAttributes(mpAnimationWidget->getVisualizer()->getTimeManager()->getVisTime());
-        mpAnimationWidget->updateScene();
+        //shape->setTextureImagePath("D:/Projekte/HPCOM/Literatur/Visualisierung/Bild1.png");
+         // shape->setTextureImagePath("C:/Users/waurich/AppData/Local/Temp/OpenModelica/OMEdit/tempTextureImage.png");
+
+        shape->setTextureImagePath(":/Resources/bitmaps/check.png");
+        mpAnimationWidget->getVisualizer()->modifyShape(mSelectedShape);
         mSelectedShape = "";
       }
     }
@@ -307,9 +309,9 @@ void ViewerWidget::applyCustomTexture()
     ShapeObject* shape = nullptr;
     if ((shape = mpAnimationWidget->getVisualizer()->getBaseData()->getShapeObjectByID(mSelectedShape)))
     {
-      if (shape->_type.compare("dxf") == 0)
+      if (shape->_type.compare("dxf") == 0 or shape->_type.compare("stl") == 0)
       {
-        QString msg = tr("Texture feature for DXF-Files is not applicable.");
+        QString msg = tr("Texture feature for CAD-Files is not applicable.");
         MessagesWidget::instance()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0, msg, Helper::scriptingKind,
                                                                     Helper::notificationLevel));
       }
@@ -318,13 +320,11 @@ void ViewerWidget::applyCustomTexture()
         QString fileName = StringHandler::getOpenFileName(this, QString("%1 - %2").arg(Helper::applicationName).arg(Helper::chooseFile),
                                                               NULL, Helper::bitmapFileTypes, NULL);
         shape->setTextureImagePath(fileName.toStdString());
-        mpAnimationWidget->getVisualizer()->updateVisAttributes(mpAnimationWidget->getVisualizer()->getTimeManager()->getVisTime());
-        mpAnimationWidget->updateScene();
+        mpAnimationWidget->getVisualizer()->modifyShape(mSelectedShape);
         mSelectedShape = "";
       }
     }
 }
-
 
 /*!
  * \brief ViewerWidget::changeShapeTransparency
@@ -345,8 +345,7 @@ void ViewerWidget::changeShapeTransparency()
       } else {
         shape->setTransparency(0.0);
       }
-      mpAnimationWidget->getVisualizer()->updateVisAttributes(mpAnimationWidget->getVisualizer()->getTimeManager()->getVisTime());
-      mpAnimationWidget->updateScene();
+      mpAnimationWidget->getVisualizer()->modifyShape(mSelectedShape);
       mSelectedShape = "";
     }
   }
@@ -367,8 +366,7 @@ void ViewerWidget::makeShapeInvisible()
       mSelectedShape = "";
     } else {
       shape->setTransparency(1.0);
-      mpAnimationWidget->getVisualizer()->updateVisAttributes(mpAnimationWidget->getVisualizer()->getTimeManager()->getVisTime());
-      mpAnimationWidget->updateScene();
+      mpAnimationWidget->getVisualizer()->modifyShape(mSelectedShape);
       mSelectedShape = "";
     }
   }
@@ -403,8 +401,7 @@ void ViewerWidget::changeShapeColor()
           MessagesWidget::instance()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0, msg, Helper::scriptingKind,
                                                                 Helper::notificationLevel));
       }
-      mpAnimationWidget->getVisualizer()->updateVisAttributes(mpAnimationWidget->getVisualizer()->getTimeManager()->getVisTime());
-      mpAnimationWidget->updateScene();
+      mpAnimationWidget->getVisualizer()->modifyShape(mSelectedShape);
       mSelectedShape = "";
     }
   }
@@ -423,9 +420,8 @@ void ViewerWidget::removeTransparencyForAllShapes()
     for (std::vector<ShapeObject>::iterator shape = shapes->begin() ; shape < shapes->end(); ++shape) {
       shape->setTransparency(0.0);
       shape->setTextureImagePath("");
+      mpAnimationWidget->getVisualizer()->modifyShape(shape->_id);
     }
-    mpAnimationWidget->getVisualizer()->updateVisAttributes(mpAnimationWidget->getVisualizer()->getTimeManager()->getVisTime());
-    mpAnimationWidget->updateScene();
   }
 }
 

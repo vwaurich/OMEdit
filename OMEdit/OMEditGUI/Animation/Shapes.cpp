@@ -67,7 +67,8 @@ ShapeObject::ShapeObject()
           _mat(osg::Matrix(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)),
           _extra(ShapeObjectAttribute(0.0)),
       mTransparent(0.0),
-      mTextureImagePath("")
+      mTextureImagePath(""),
+      mStateSetAction(stateSetAction::update)
 
 {
   _r[0] = ShapeObjectAttribute(0.1);
