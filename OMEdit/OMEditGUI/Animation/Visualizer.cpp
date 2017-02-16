@@ -43,8 +43,6 @@
 #include <osgDB/Registry>
 #include <osgDB/WriteFile>
 
-#include <Util/Utilities.h>
-
 OMVisualBase::OMVisualBase(const std::string& modelFile, const std::string& path)
   : _shapes(),
     _modelFile(modelFile),
@@ -557,11 +555,10 @@ void UpdateVisitor::apply(osg::Geode& node)
 
   case(stateSetAction::modify):
    {
-      //apply texture
-      applyTexture(ss, _shape.getTextureImagePath());
-
-      break;
-    }//end case
+     //apply texture
+     applyTexture(ss, _shape.getTextureImagePath());
+     break;
+   }//end case
 
    default:
    {break;}
@@ -571,14 +568,11 @@ void UpdateVisitor::apply(osg::Geode& node)
   //set color
   if (_shape._type.compare("dxf") != 0)
     changeColor(ss, _shape._color[0].exp, _shape._color[1].exp, _shape._color[2].exp);
+
   //set transparency
   makeTransparent(node, _shape.getTransparency());
 
   node.setStateSet(ss);
-  if (stateSetAction::modify == _shape.getStateSetAction())
-    std::cout<<"MODIFIED "<<_shape._id<<std::endl;
-  if (stateSetAction::update == _shape.getStateSetAction())
-    std::cout<<"UDPATED "<<_shape._id<<std::endl;
   traverse(node);
 }
 
@@ -597,6 +591,7 @@ void UpdateVisitor::changeColor(osg::StateSet* ss, float r, float g, float b)
   ss->setAttribute(material);
 }
 
+
 /*!
  * \brief UpdateVisitor::applyTexture
  * sets a texture for a geode
@@ -609,36 +604,25 @@ void UpdateVisitor::applyTexture(osg::StateSet* ss, std::string imagePath)
     std::string resIdent = ":/Resources";
     if(!imagePath.compare(0,resIdent.length(),resIdent))
     {
-      std::cout<<"imagePath "<<"  "<<imagePath<<std::endl;
       QImage* qim = new QImage(QString::fromStdString(imagePath));
-      QFile file = QFile(":/Resources/bitmaps/check.png");
-      QFile::copy(file, "C:/Users/waurich/AppData/Local/Temp/OpenModelica/OMEdit/aha.png");
-      std::cout<<"tempdir "<<"  "<<Utilities::tempDirectory().toStdString()<<std::endl;
-
-      QString imageFileName = Utilities::tempDirectory()+"tempTextureImage.png";
-      std::cout<<"imageFileName "<<"  "<<imageFileName.toStdString()<<std::endl;
-      bool b = qim->save(imageFileName);
-      std::cout<<"new path "<<b<<"  "<<imageFileName.toStdString()<<std::endl;
-      image = osgDB::readImageFile(imageFileName.toStdString());
+      image = convertImage(*qim);
+      image->setInternalTextureFormat(GL_RGBA);
     }
     else
     {
       image = osgDB::readImageFile(imagePath);
     }
-
-    if (!image)
+    if (image)
     {
-      std::cout << "Couldn't load texture." << std::endl;
-    }
     osg::Texture2D *texture = new osg::Texture2D;
     texture->setDataVariance(osg::Object::DYNAMIC);
     texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR);
     texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
     texture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP);
-    texture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP);
     texture->setImage(image);
     texture->setResizeNonPowerOfTwoHint(false);// dont output console message about scaling
     ss->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
+    }
   }
   else
   {
@@ -664,38 +648,6 @@ osg::Image* UpdateVisitor::convertImage(const QImage& iImage)
    return osgImage;
 }
 
-/*!
- * \brief UpdateVisitor::applyTexture
- * sets a texture for a geode
- */
-void UpdateVisitor::applyTexture_noCopy(osg::StateSet* ss, std::string imagePath)
-{
-  if (imagePath.compare(""))
-  {
-    //osg::Image *image = osgDB::readImageFile(imagePath);
-    QImage* qim = new QImage(":/Resources/bitmaps/check.png");
-    osg::Image *image = new osg::Image();
-    image = convertImage(*qim);
-    image->setInternalTextureFormat(GL_RGBA);
-    if (!image)
-    {
-      std::cout << "Couldn't load texture." << std::endl;
-    }
-    osg::Texture2D *texture = new osg::Texture2D;
-    texture->setDataVariance(osg::Object::DYNAMIC);
-    texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR);
-    texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
-    texture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP);
-    texture->setImage(image);
-    texture->setResizeNonPowerOfTwoHint(false);// dont output console message about scaling
-    ss->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
-  }
-  else
-  {
-    ss->getTextureAttributeList().clear();
-    ss->getTextureModeList().clear();
-  }
-}
 
 /*!
  * \brief UpdateVisitor::makeTransparent

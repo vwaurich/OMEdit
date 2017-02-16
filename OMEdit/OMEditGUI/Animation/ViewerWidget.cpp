@@ -290,9 +290,6 @@ void ViewerWidget::applyCheckTexture()
       }
       else
       {
-        //shape->setTextureImagePath("D:/Projekte/HPCOM/Literatur/Visualisierung/Bild1.png");
-         // shape->setTextureImagePath("C:/Users/waurich/AppData/Local/Temp/OpenModelica/OMEdit/tempTextureImage.png");
-
         shape->setTextureImagePath(":/Resources/bitmaps/check.png");
         mpAnimationWidget->getVisualizer()->modifyShape(mSelectedShape);
         mSelectedShape = "";

@@ -71,9 +71,9 @@ class ShapeObject
   ShapeObject(const ShapeObject&) = default;
   ShapeObject& operator=(const ShapeObject&) = default;
   void dumpVisAttributes() const;
-  void setTransparency(float transp) {std::cout<<"SETTRANSP"<<std::endl;mTransparent = transp;mStateSetAction=stateSetAction::modify;}
+  void setTransparency(float transp) {mTransparent = transp;}
   float getTransparency() {return mTransparent;}
-  void setTextureImagePath(std::string imagePath) {std::cout<<"SETTEXTURE"<<std::endl; mTextureImagePath = imagePath; mStateSetAction=stateSetAction::modify;}
+  void setTextureImagePath(std::string imagePath) {mTextureImagePath = imagePath;}
   std::string getTextureImagePath() {return mTextureImagePath;}
   void setColor(QColor col) {_color[0].setConstValue(col.red());
                              _color[1].setConstValue(col.green());

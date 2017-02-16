@@ -92,7 +92,6 @@ private:
   osgGA::EventQueue* getEventQueue() const;
   osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> mpGraphicsWindow;
   osg::ref_ptr<Viewer> mpViewer;
-  //osg viewer scene
   osgViewer::View* mpSceneView;
   std::string mSelectedShape;
   AbstractAnimationWindow *mpAnimationWidget;
