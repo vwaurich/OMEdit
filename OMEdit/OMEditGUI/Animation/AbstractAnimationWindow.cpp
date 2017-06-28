@@ -248,6 +248,8 @@ void AbstractAnimationWindow::initInteractiveControlPanel()
     mSpinBoxVector.clear();
     mStateLabels.clear();
 
+    if (FMUvis->getFMU()->getFMUData()->_stateNames.size()==FMUvis->getFMU()->getFMUData()->_nStates)
+    {
     //widgets for the states
     QVBoxLayout *layout = new QVBoxLayout(this);
     layout->addWidget(new QLabel(QString("<b>modify state variables</b>"),this));
@@ -299,6 +301,14 @@ void AbstractAnimationWindow::initInteractiveControlPanel()
     QScrollArea *scrollArea = new QScrollArea(this);
     scrollArea->setWidget(widget);
     mpAnimationParameterDockerWidget->setWidget(scrollArea);
+    }
+    else
+    {
+        MessagesWidget::instance()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0, tr("Information about states could not be determined."),
+                                                                Helper::scriptingKind, Helper::errorLevel));
+        mpAnimationParameterDockerWidget->hide();
+
+    }
   }
   else
   {
@@ -713,7 +723,7 @@ void AbstractAnimationWindow::rotateCameraRight()
 QDoubleSpinBoxIndexed::QDoubleSpinBoxIndexed(QWidget *pParent, int idx)
   : QDoubleSpinBox(pParent)
 {
-  stateIdx = idx;
+  mStateIdx = idx;
   connect( this, SIGNAL(valueChanged(double)),
            this, SLOT(slotForwardValueChanged(double)));
 }
@@ -724,6 +734,6 @@ QDoubleSpinBoxIndexed::QDoubleSpinBoxIndexed(QWidget *pParent, int idx)
  */
 void QDoubleSpinBoxIndexed::slotForwardValueChanged(double val)
 {
- emit valueChangedFrom(val,stateIdx);
+ emit valueChangedFrom(val, mStateIdx);
 }
 

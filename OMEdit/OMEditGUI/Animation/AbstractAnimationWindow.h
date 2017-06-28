@@ -55,7 +55,7 @@ class QDoubleSpinBoxIndexed : public QDoubleSpinBox
 
 public:
   explicit QDoubleSpinBoxIndexed(QWidget *pParent, int idx);
-  int stateIdx;
+  int mStateIdx;
 signals:
   void valueChangedFrom(double val, int idx);
 private slots:
