@@ -133,8 +133,7 @@ void AbstractAnimationWindow::openAnimationFile(QString fileName, bool stashCame
         mpPerspectiveDropDownBox->setCurrentIndex(1);
         cameraPositionSide();
       }
-      if (isFMU(mFileName))
-      {
+      if (isFMU(mFileName)) {
         initInteractiveControlPanel();
       }
 
@@ -219,8 +218,22 @@ void AbstractAnimationWindow::createActions()
   mpInteractiveControlAction->setIcon(QIcon(":/Resources/icons/control-panel.svg"));
   mpInteractiveControlAction->setText(tr("interactive control"));
   mpInteractiveControlAction->setStatusTip(tr("Opens the interactive control panel"));
-  connect(mpInteractiveControlAction, SIGNAL(triggered()), this, SLOT(initInteractiveControlPanel()));
+  connect(mpInteractiveControlAction, SIGNAL(triggered()), this, SLOT(showOrHideInteractionPanel()));
+  mpInteractiveControlAction->setEnabled(false);
   mpAnimationParameterDockerWidget->hide();
+}
+
+/*!
+ * \brief AbstractAnimationWindow::showOrHideInteractionPanel
+ */
+void AbstractAnimationWindow::showOrHideInteractionPanel()
+{
+  if (mpAnimationParameterDockerWidget->isVisible()) {
+    mpAnimationParameterDockerWidget->show();
+  }
+  else {
+    mpAnimationParameterDockerWidget->hide();
+  }
 }
 
 /*!
@@ -230,10 +243,9 @@ void AbstractAnimationWindow::updateControlPanelValues()
 {
   if (getVisualizer()) {
     VisualizerFMU* FMUvis = dynamic_cast<VisualizerFMU*>(mpVisualizer);
-    for (unsigned int stateIdx = 0; stateIdx < mSpinBoxVector.size(); stateIdx++)
-        {
-          mStateLabels.at(stateIdx)->setText(QString::number(FMUvis->getFMU()->getFMUData()->_states[stateIdx]));
-        }
+    for (int stateIdx = 0; stateIdx < mSpinBoxVector.size(); stateIdx++) {
+      mStateLabels.at(stateIdx)->setText(QString::number(FMUvis->getFMU()->getFMUData()->_states[stateIdx]));
+    }
   }
 }
 
@@ -248,14 +260,13 @@ void AbstractAnimationWindow::initInteractiveControlPanel()
     mSpinBoxVector.clear();
     mStateLabels.clear();
 
-    if (FMUvis->getFMU()->getFMUData()->_stateNames.size()==FMUvis->getFMU()->getFMUData()->_nStates)
-    {
+    if (FMUvis->getFMU()->getFMUData()->_stateNames.size()==FMUvis->getFMU()->getFMUData()->_nStates){
     //widgets for the states
-    QVBoxLayout *layout = new QVBoxLayout(this);
+    QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(new QLabel(QString("<b>modify state variables</b>"),this));
     for (unsigned int stateIdx = 0; stateIdx < FMUvis->getFMU()->getFMUData()->_nStates; stateIdx++)
     {
-      QDoubleSpinBoxIndexed* spinBox = new QDoubleSpinBoxIndexed(this, stateIdx);
+      DoubleSpinBoxIndexed* spinBox = new DoubleSpinBoxIndexed(this, stateIdx);
       spinBox->setValue(FMUvis->getFMU()->getFMUData()->_states[stateIdx]);
       spinBox->setMaximum(DBL_MAX);
       spinBox->setMinimum(-DBL_MAX);
@@ -278,8 +289,7 @@ void AbstractAnimationWindow::initInteractiveControlPanel()
 
     //widgets for the inputs
     //layout->addWidget(new QLabel(QString("<b>modify inputs</b>"),this));
-    for (int inputIdx = 0; inputIdx < 0; inputIdx++)
-    {
+    for (int inputIdx = 0; inputIdx < 0; inputIdx++) {
       std::string name = "some input";
       layout->addWidget(new QLabel(QString::fromStdString("inputName"),this));
       QWidget* valWidget = new QWidget();
@@ -302,16 +312,14 @@ void AbstractAnimationWindow::initInteractiveControlPanel()
     scrollArea->setWidget(widget);
     mpAnimationParameterDockerWidget->setWidget(scrollArea);
     }
-    else
-    {
+    else {
         MessagesWidget::instance()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0, tr("Information about states could not be determined."),
                                                                 Helper::scriptingKind, Helper::errorLevel));
         mpAnimationParameterDockerWidget->hide();
 
     }
   }
-  else
-  {
+  else {
     MessagesWidget::instance()->addGUIMessage(MessageItem(MessageItem::Modelica, "", false, 0, 0, 0, 0, tr("Interactive Control needs an FMU ME 2.0"),
                                                             Helper::scriptingKind, Helper::errorLevel));
     mpAnimationParameterDockerWidget->hide();
@@ -325,11 +333,9 @@ void AbstractAnimationWindow::initInteractiveControlPanel()
  */
 void AbstractAnimationWindow::setStateSolveSystem(double val, int idx)
 {
-  if (idx>=0)
-  {
+  if (idx>=0) {
     VisualizerFMU* FMUvis = dynamic_cast<VisualizerFMU*>(mpVisualizer);
-    if (FMUvis)
-    {
+    if (FMUvis) {
       FMUvis->getFMU()->getFMUData()->_states[idx] = val;
     }
     FMUvis->updateSystem();
@@ -417,7 +423,13 @@ bool AbstractAnimationWindow::loadVisualization()
   if (visType == VisType::FMU) {
     openFMUSettingsDialog(dynamic_cast<VisualizerFMU*>(mpVisualizer));
     mpInteractiveControlAction->setEnabled(true);
+    initInteractiveControlPanel();
   }
+  else {
+    mpInteractiveControlAction->setEnabled(false);
+    mpAnimationParameterDockerWidget->hide();
+  }
+
   return true;
 }
 
@@ -718,9 +730,9 @@ void AbstractAnimationWindow::rotateCameraRight()
 }
 
 /*!
- * \brief QDoubleSpinBoxIndexed::QDoubleSpinBoxIndexed
+ * \brief DoubleSpinBoxIndexed::DoubleSpinBoxIndexed
  */
-QDoubleSpinBoxIndexed::QDoubleSpinBoxIndexed(QWidget *pParent, int idx)
+DoubleSpinBoxIndexed::DoubleSpinBoxIndexed(QWidget *pParent, int idx)
   : QDoubleSpinBox(pParent)
 {
   mStateIdx = idx;
@@ -729,10 +741,10 @@ QDoubleSpinBoxIndexed::QDoubleSpinBoxIndexed(QWidget *pParent, int idx)
 }
 
 /*!
- * \brief QDoubleSpinBoxIndexed::slotForwardValueChanged
+ * \brief DoubleSpinBoxIndexed::slotForwardValueChanged
  * \param val
  */
-void QDoubleSpinBoxIndexed::slotForwardValueChanged(double val)
+void DoubleSpinBoxIndexed::slotForwardValueChanged(double val)
 {
  emit valueChangedFrom(val, mStateIdx);
 }

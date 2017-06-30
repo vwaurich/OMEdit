@@ -49,12 +49,12 @@ class VisualizerAbstract;
 class ViewerWidget;
 class Label;
 
-class QDoubleSpinBoxIndexed : public QDoubleSpinBox
+class DoubleSpinBoxIndexed : public QDoubleSpinBox
 {
   Q_OBJECT
 
 public:
-  explicit QDoubleSpinBoxIndexed(QWidget *pParent, int idx);
+  explicit DoubleSpinBoxIndexed(QWidget *pParent, int idx);
   int mStateIdx;
 signals:
   void valueChangedFrom(double val, int idx);
@@ -101,8 +101,8 @@ protected:
   QComboBox *mpPerspectiveDropDownBox;
   QAction *mpRotateCameraLeftAction;
   QAction *mpRotateCameraRightAction;
-  std::vector<QDoubleSpinBoxIndexed*> mSpinBoxVector;
-  std::vector<QLabel*> mStateLabels;
+  QVector<DoubleSpinBoxIndexed*> mSpinBoxVector;
+  QVector<QLabel*> mStateLabels;
   osg::Matrixd mStashedViewMatrix;
   bool mCameraInitialized;
 
@@ -129,7 +129,7 @@ public slots:
   void rotateCameraRight();
   void initInteractiveControlPanel();
   void setStateSolveSystem(double val, int idx);
-
+  void showOrHideInteractionPanel();
 };
 
 #endif // ABSTRACTANIMATIONWINDOW_H

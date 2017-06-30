@@ -179,6 +179,6 @@
         <file>Resources/icons/completerkeyword.svg</file>
         <file>Resources/icons/completerType.svg</file>
         <file>Resources/icons/completerCodeSnippets.svg</file>
-		<file>Resources/icons/update.svg</file>
+        <file>Resources/icons/update.svg</file>
     </qresource>
 </RCC>
