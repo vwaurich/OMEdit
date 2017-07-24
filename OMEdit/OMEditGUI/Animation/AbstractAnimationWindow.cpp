@@ -218,22 +218,8 @@ void AbstractAnimationWindow::createActions()
   mpInteractiveControlAction->setIcon(QIcon(":/Resources/icons/control-panel.svg"));
   mpInteractiveControlAction->setText(tr("interactive control"));
   mpInteractiveControlAction->setStatusTip(tr("Opens the interactive control panel"));
-  connect(mpInteractiveControlAction, SIGNAL(triggered()), this, SLOT(showOrHideInteractionPanel()));
   mpInteractiveControlAction->setEnabled(false);
   mpAnimationParameterDockerWidget->hide();
-}
-
-/*!
- * \brief AbstractAnimationWindow::showOrHideInteractionPanel
- */
-void AbstractAnimationWindow::showOrHideInteractionPanel()
-{
-  if (mpAnimationParameterDockerWidget->isVisible()) {
-    mpAnimationParameterDockerWidget->show();
-  }
-  else {
-    mpAnimationParameterDockerWidget->hide();
-  }
 }
 
 /*!
@@ -263,6 +249,8 @@ void AbstractAnimationWindow::initInteractiveControlPanel()
     if (FMUvis->getFMU()->getFMUData()->_stateNames.size()==FMUvis->getFMU()->getFMUData()->_nStates){
     //widgets for the states
     QVBoxLayout *layout = new QVBoxLayout();
+    layout->setSpacing(2);
+
     layout->addWidget(new QLabel(QString("<b>modify state variables</b>"),this));
     for (unsigned int stateIdx = 0; stateIdx < FMUvis->getFMU()->getFMUData()->_nStates; stateIdx++)
     {
@@ -274,14 +262,20 @@ void AbstractAnimationWindow::initInteractiveControlPanel()
       mSpinBoxVector.push_back(spinBox);
 
       QLabel* stateLabel = new QLabel(QString::number(FMUvis->getFMU()->getFMUData()->_states[stateIdx]), this);
+      stateLabel->setMargin(0);
       mStateLabels.push_back(stateLabel);
 
       QWidget* stateValWidget = new QWidget();
-      QHBoxLayout *stateInfoLayout = new QHBoxLayout(this);
+      QHBoxLayout *stateInfoLayout = new QHBoxLayout();
+      stateInfoLayout->setMargin(0);
       stateInfoLayout->addWidget(stateLabel);
       stateInfoLayout->addWidget(spinBox);
       stateValWidget->setLayout(stateInfoLayout);
 
+      QWidget* gap = new QWidget(this);
+      gap->setFixedHeight(5);
+
+      layout->addWidget(gap);
       layout->addWidget(new QLabel(QString::fromStdString(FMUvis->getFMU()->getFMUData()->_stateNames.at(stateIdx)),this));
       layout->addWidget(stateValWidget);
       connect(mSpinBoxVector.at(stateIdx), SIGNAL(valueChangedFrom(double, int)), this, SLOT(setStateSolveSystem(double, int)));
@@ -289,11 +283,12 @@ void AbstractAnimationWindow::initInteractiveControlPanel()
 
     //widgets for the inputs
     //layout->addWidget(new QLabel(QString("<b>modify inputs</b>"),this));
+    /*
     for (int inputIdx = 0; inputIdx < 0; inputIdx++) {
       std::string name = "some input";
       layout->addWidget(new QLabel(QString::fromStdString("inputName"),this));
       QWidget* valWidget = new QWidget();
-      QHBoxLayout *valueLayout = new QHBoxLayout(this);
+      QHBoxLayout *valueLayout = new QHBoxLayout();
       valueLayout->addWidget(new QLabel(QString::fromStdString("min"),this));
       valueLayout->addWidget(new QLabel(QString::fromStdString("value"),this));
       valueLayout->addWidget(new QLabel(QString::fromStdString("max"),this));
@@ -301,11 +296,11 @@ void AbstractAnimationWindow::initInteractiveControlPanel()
       layout->addWidget(valWidget);
       layout->addWidget(new QSlider(Qt::Horizontal, this));
     }
-    /*
     QPushButton* updateButton = new QPushButton(QIcon(":/Resources/icons/update.svg"), "&update system",this);
     layout->addWidget(updateButton);
     connect(updateButton, SIGNAL(released()), this, SLOT(setStatesSolveSystem()));
     */
+
     layout->setSizeConstraint(QLayout::SetMinimumSize);
     widget->setLayout(layout);
     QScrollArea *scrollArea = new QScrollArea(this);

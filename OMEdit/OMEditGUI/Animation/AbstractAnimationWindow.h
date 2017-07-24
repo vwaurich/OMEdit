@@ -129,7 +129,6 @@ public slots:
   void rotateCameraRight();
   void initInteractiveControlPanel();
   void setStateSolveSystem(double val, int idx);
-  void showOrHideInteractionPanel();
 };
 
 #endif // ABSTRACTANIMATIONWINDOW_H
