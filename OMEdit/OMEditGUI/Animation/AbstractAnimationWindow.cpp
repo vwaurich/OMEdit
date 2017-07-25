@@ -272,10 +272,7 @@ void AbstractAnimationWindow::initInteractiveControlPanel()
       stateInfoLayout->addWidget(spinBox);
       stateValWidget->setLayout(stateInfoLayout);
 
-      QWidget* gap = new QWidget(this);
-      gap->setFixedHeight(5);
-
-      layout->addWidget(gap);
+      layout->addSpacing(12);
       layout->addWidget(new QLabel(QString::fromStdString(FMUvis->getFMU()->getFMUData()->_stateNames.at(stateIdx)),this));
       layout->addWidget(stateValWidget);
       connect(mSpinBoxVector.at(stateIdx), SIGNAL(valueChangedFrom(double, int)), this, SLOT(setStateSolveSystem(double, int)));
