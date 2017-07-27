@@ -779,7 +779,11 @@ QRectF Component::itemsBoundingRect()
     rect |= pComponent->sceneBoundingRect();
   }
   foreach (QGraphicsItem *item, mShapesList) {
-    rect |= item->sceneBoundingRect();
+    if (TextAnnotation *pTextAnnotation = dynamic_cast<TextAnnotation*>(item)) {
+      rect |= pTextAnnotation->mExportBoundingRect;
+    } else {
+      rect |= item->sceneBoundingRect();
+    }
   }
   if (mpNonExistingComponentLine->isVisible()) {
     rect |= mpNonExistingComponentLine->sceneBoundingRect();
@@ -1733,6 +1737,9 @@ QString Component::getParameterDisplayStringFromExtendsParameters(QString parame
   QString typeName = "";
   foreach (Component *pInheritedComponent, mInheritedComponentsList) {
     if (pInheritedComponent->getLibraryTreeItem()) {
+      if (!pInheritedComponent->getLibraryTreeItem()->getModelWidget()) {
+        MainWindow::instance()->getLibraryWidget()->getLibraryTreeModel()->showModelWidget(pInheritedComponent->getLibraryTreeItem(), false);
+      }
       pInheritedComponent->getLibraryTreeItem()->getModelWidget()->loadDiagramView();
       foreach (Component *pComponent, pInheritedComponent->getLibraryTreeItem()->getModelWidget()->getDiagramGraphicsView()->getComponentsList()) {
         if (pComponent->getComponentInfo()->getName().compare(parameterName) == 0) {
